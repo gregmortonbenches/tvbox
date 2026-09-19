@@ -197,6 +197,28 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   `server-only`, which means scripts and tests cannot import it. The parsing
   was briefly duplicated into the backfill script; don't reintroduce that.
 
+- **The db client is LAZY on purpose.** `next build` imports every route
+  module to collect config; a client built at module load makes a build with
+  no `DATABASE_URL` fail during page-data collection — exactly what happens on
+  a first deploy before the env vars are set. Don't move the connection back
+  to module scope. The `db` export is a Proxy so call sites stay unchanged.
+
+- **Pool settings differ in production because of serverless.** Each function
+  instance is its own process with its own pool, so `max: 1` there rather than
+  5 — twenty warm instances at 5 apiece would exceed most free Postgres tiers.
+  `prepare: false` in production because transaction-mode poolers (Supabase
+  6543, PgBouncer, Supavisor) can't carry prepared statements across pooled
+  connections and fail obscurely if you leave it on.
+
+- **Migrations are NOT part of the build.** They're run by hand against the
+  production database. A deploy that half-applies a schema change is much
+  worse than one that needs a second command.
+
+- **The login gate has no rate limiting.** Constant-time compare and a signed
+  cookie, but nothing stops repeated guessing, and the deployed URL is public.
+  Documented in the README as a long-passphrase requirement rather than
+  silently shipped. Add rate limiting before this holds anything sensitive.
+
 ## Known gaps
 
 - **Anything that fetches from TMDB is unverified against a live token** — the

@@ -149,16 +149,81 @@ checked, so the quota isn't spent re-asking about the same misses forever.
 
 ## Deploying
 
-Any host that runs Next.js will do. Vercel plus a hosted Postgres (Neon,
-Supabase, Vercel Postgres) is the least work, and both have free tiers that fit
-two people comfortably.
+Any Next.js host works; these are the Vercel steps. Budget about 20 minutes,
+most of it waiting for a database to provision.
 
-Set every required variable from the table above in the host's environment,
-then run `npm run db:migrate && npm run db:seed` against the production database
-once. `AUTH_SECRET` must be a real random value in production — cookies signed
-with a guessable secret can be forged.
+### 1. A Postgres
+
+[Neon](https://neon.tech) or [Supabase](https://supabase.com) both have free
+tiers that comfortably fit two people. **Copy the POOLED connection string**
+(Neon: the host with `-pooler` in it; Supabase: port 6543, not 5432). Serverless
+functions open a connection each, and a pooler is what stops that exhausting
+the database.
+
+### 2. A TMDB token
+
+A v4 **API Read Access Token** from [TMDB](https://www.themoviedb.org/settings/api)
+— the long `eyJ...` one, not the short v3 key. Without it the app deploys and
+loads, but search and every title page fail.
+
+### 3. Import the repo on Vercel
+
+[vercel.com/new](https://vercel.com/new) → import `gregmortonbenches/tvbox`.
+Framework and build command are detected automatically; nothing to configure.
+
+### 4. Set the environment variables
+
+Before the first deploy finishes, under Settings → Environment Variables:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The pooled connection string from step 1 |
+| `TMDB_ACCESS_TOKEN` | The token from step 2 |
+| `APP_PASSWORD` | Your shared password — see the note below |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `OMDB_API_KEY` | Optional — enables RT/IMDb/Metacritic scores |
+| `ANTHROPIC_API_KEY` | Optional — enables Claude recommendations |
+
+The build itself needs none of these and will succeed without them; the app
+just won't work until they're set. If you add them after the first deploy,
+redeploy to pick them up.
+
+### 5. Create the tables and profiles
+
+Run these from your own machine with `DATABASE_URL` pointed at the production
+database — there's no migration step in the build, deliberately, so a deploy
+can never half-apply a schema change:
+
+```bash
+DATABASE_URL="<production url>" npm run db:migrate
+DATABASE_URL="<production url>" npm run db:seed
+```
+
+### 6. Load your history (optional)
+
+Same idea — these run from your machine against the production database:
+
+```bash
+DATABASE_URL="<prod>" TMDB_ACCESS_TOKEN="<token>" npm run import:trakt
+DATABASE_URL="<prod>" TMDB_ACCESS_TOKEN="<token>" npm run import:films -- --dry-run
+DATABASE_URL="<prod>" TMDB_ACCESS_TOKEN="<token>" OMDB_API_KEY="<key>" npm run backfill:ratings
+```
+
+### A word on `APP_PASSWORD`
+
+Once deployed, the URL is on the public internet and the only thing between a
+stranger and your watchlist is this one password. It's compared in constant
+time and the session cookie is HMAC-signed, but **there is no rate limiting on
+the login form** — nothing stops someone guessing repeatedly.
+
+For two people that's an acceptable trade if the password is long. Use a
+passphrase of four or more random words rather than a word and a number. If
+this ever holds anything you'd mind a stranger reading, add rate limiting
+first.
 
 ## Stack
+
+
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Drizzle ORM ·
 Postgres · TMDB · the Anthropic SDK (optional).
