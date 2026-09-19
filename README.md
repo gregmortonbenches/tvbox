@@ -66,6 +66,38 @@ which is free.
 Nothing calls the Claude API on page load, on the refresh poll, or when you
 tick an episode.
 
+## Importing existing history
+
+Two importers, in `scripts/`. Both take `--dry-run` (parses and reports, writes
+nothing) and `--user <username>` (defaults to `greg`).
+
+```bash
+npm run import:trakt -- --dry-run     # preview
+npm run import:trakt                  # 59 shows, ~3,400 episodes
+npm run import:films -- --dry-run     # preview + write the review file
+npm run import:films                  # only confident matches
+```
+
+**Trakt (TV)** reads `data/trakt-shows.json`. The export carries TMDB ids, so
+nothing is resolved by search and nothing can mis-match. Shows where
+`plays >= aired_episodes` are marked watched with every episode ticked; partly
+watched shows get the status only, because the export doesn't say *which*
+episodes were seen and inventing that would be a lie.
+
+**Films** reads `data/letterboxd-films.txt`, which was transcribed from
+screenshots and has no TMDB ids. Every title has to be resolved by search, so
+the importer only writes **confident** matches — exactly one candidate whose
+name matches exactly after normalising case, accents and punctuation — and
+writes everything else to `data/films-needs-review.json` for you to correct.
+Add a disambiguating year to the source (`Crash (1996)`) and re-run.
+
+It also flags TV series sitting in the film list (*Chernobyl*, *Band of
+Brothers*, *Small Axe* and friends) rather than dropping them silently.
+
+Neither importer records watch dates: the Trakt timestamps are all epoch, and
+Letterboxd grid order is by release date, not viewing date. A fabricated date
+would misorder the archive.
+
 ## Scripts
 
 | Command | Does |
@@ -79,6 +111,9 @@ tick an episode.
 | `npm run db:push` | Push schema straight to the DB (dev only — skips migration files) |
 | `npm run db:studio` | Drizzle Studio, a GUI for the data |
 | `npm run db:seed` | Create/update the two profiles. Safe to re-run. |
+| `npm test` | Parser and film-matcher tests |
+| `npm run import:trakt` | Import TV history (see above) |
+| `npm run import:films` | Import film history (see above) |
 
 ## Deploying
 

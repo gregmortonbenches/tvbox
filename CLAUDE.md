@@ -37,6 +37,10 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
 | `data/` | Imported watch history. Personal, but this is a private repo. |
 | `src/components/WalrusArt.tsx` | The mascot's artwork, alone, so it can be swapped in one file. |
 | `scripts/seed.mts` | Creates the two profiles. Idempotent. |
+| `scripts/parseFilmList.mts` | Parser for the transcribed film list. Comma handling is the whole difficulty — read the header. |
+| `scripts/import-films.mts` | Film import. `classify()` is the safety-critical bit and is a pure function so it can be tested. |
+| `scripts/import-trakt.mts` | TV import. Simple, because the export carries TMDB ids. |
+| `tests/` | Plain Node scripts, no framework. `npm test`. |
 | `drizzle/` | Generated SQL migrations — committed on purpose. |
 
 ## Decisions worth knowing
@@ -146,6 +150,24 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   inversion — don't stub one in.
 - After changing `schema.ts`, run `npm run db:generate` and commit the SQL.
 
+- **Imports only write CONFIDENT matches.** The film list has no TMDB ids and
+  was transcribed from screenshots, so a wrong search result would silently put
+  the wrong film in the archive. `classify()` therefore errs towards the review
+  pile: one exact normalised-title match, or a year hint that resolves the tie,
+  or it goes to `data/films-needs-review.json` for a human. Being short a few
+  films is recoverable; an archive quietly full of wrong ones is not. Don't
+  "improve" this by adding fuzzy matching without a review step.
+
+- **Apostrophes are deleted in normalisation, not spaced.** `Who's` must
+  normalise equal to `whos`, because the source was transcribed by eye and
+  drops them. Turning them into a space yields `who s` and sends real matches
+  to review. There's a test pinning this.
+
+- **No watch dates are imported, deliberately.** Trakt's timestamps in this
+  export are all epoch and Letterboxd's grid is ordered by release date, not
+  viewing date. `finishedAt` is left null rather than stamped with an invented
+  date that would misorder the archive.
+
 ## Known gaps
 
 - **Anything that fetches from TMDB is unverified against a live token** — the
@@ -160,8 +182,11 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   `drizzle-kit` — a dev dependency, never in the runtime bundle. `npm audit fix
   --force` "fixes" it by downgrading drizzle-kit to 0.18.1, which is ancient and
   breaking. Left alone deliberately.
-- No test suite yet. `npm run typecheck && npm run lint && npm run build` is the
-  current gate.
+- Tests cover the import parser and matcher only (`npm test`). The app itself
+  has none; `npm run typecheck && npm run lint && npm run build` is the gate.
+- **Neither importer has been run against a live TMDB token.** The parser and
+  matcher are tested, and both scripts degrade cleanly without a token, but the
+  actual resolve-and-write path is unexercised. Run `--dry-run` first.
 - Episode-level ratings are in the schema but nothing in the UI writes them.
 - There's no handling for a poster that 404s at the CDN (a null `posterPath`
   falls back to the title, but a broken URL shows the browser's broken-image icon).
