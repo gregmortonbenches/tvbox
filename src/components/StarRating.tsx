@@ -1,23 +1,28 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
-import { clearRating, rateShow } from "@/lib/actions";
+import { clearRating, rateTitle } from "@/lib/actions";
+import type { MediaType } from "@/lib/db/schema";
 
 /*
- * Half-star rating, Letterboxd-style: hovering the left half of a star picks
- * the half, the right half picks the whole. `value` is in half-star units
- * (1..10) to match how ratings are stored — see the ratings table comment.
+ * Half-star rating, Letterboxd-style: the left half of a star picks the half,
+ * the right half picks the whole. `value` is in half-star units (1..10) to
+ * match how ratings are stored — see the ratings table comment.
  *
- * Clicking the rating you already have clears it, which is how Letterboxd
- * behaves and saves needing a separate "remove" control.
+ * Clicking the rating you already have clears it, as Letterboxd does, which
+ * saves needing a separate "remove" control.
  */
 export function StarRating({
+  titleId,
+  mediaType,
   tmdbId,
   value,
   color,
   readOnly = false,
   size = "md",
 }: {
+  titleId: string;
+  mediaType: MediaType;
   tmdbId: number;
   value: number | null;
   color?: string;
@@ -35,10 +40,10 @@ export function StarRating({
     startTransition(async () => {
       if (half === current) {
         setOptimistic(null);
-        await clearRating(tmdbId);
+        await clearRating(titleId, mediaType, tmdbId);
       } else {
         setOptimistic(half);
-        await rateShow(tmdbId, half);
+        await rateTitle(titleId, half, mediaType, tmdbId);
       }
     });
   }
@@ -47,9 +52,7 @@ export function StarRating({
     <div
       className="flex items-center gap-0.5"
       role={readOnly ? "img" : "group"}
-      aria-label={
-        current > 0 ? `${current / 2} out of 5 stars` : "Not rated"
-      }
+      aria-label={current > 0 ? `${current / 2} out of 5 stars` : "Not rated"}
     >
       {[1, 2, 3, 4, 5].map((star) => {
         const fullAt = star * 2;
@@ -82,8 +85,6 @@ export function StarRating({
 }
 
 function Star({ px, fill, color }: { px: number; fill: number; color?: string }) {
-  // One gradient id per instance would be ideal, but a shared id per fill
-  // level is enough here: identical stops render identically.
   const id = `half-${String(fill).replace(".", "_")}`;
   const tint = color ?? "var(--color-accent)";
   return (

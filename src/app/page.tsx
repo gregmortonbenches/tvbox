@@ -1,16 +1,31 @@
 import Link from "next/link";
 import { AppShell, EmptyState, PageHeading } from "@/components/AppShell";
+import { MediaFilter, parseMediaFilter } from "@/components/MediaFilter";
 import { PosterCard } from "@/components/PosterCard";
 import { Walrus } from "@/components/Walrus";
-import { getShowCards } from "@/lib/queries";
+import { getListCounts, getTitleCards } from "@/lib/queries";
 import { getAllUsers, getCurrentUser } from "@/lib/session";
 
-export default async function WatchlistPage() {
-  const [user, people, cards] = await Promise.all([
+export default async function WatchlistPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const { type } = await searchParams;
+  const { current, mediaTypes } = parseMediaFilter(type);
+
+  const [user, people, cards, counts] = await Promise.all([
     getCurrentUser(),
     getAllUsers(),
-    getShowCards(["want", "watching"]),
+    getTitleCards(["want", "watching"], mediaTypes),
+    getListCounts(),
   ]);
+
+  const open = counts.filter((c) => c.status === "want" || c.status === "watching");
+  const tally = {
+    tv: open.filter((c) => c.mediaType === "tv").reduce((a, c) => a + c.n, 0),
+    film: open.filter((c) => c.mediaType === "film").reduce((a, c) => a + c.n, 0),
+  };
 
   const watching = cards.filter((c) => c.status === "watching");
   const want = cards.filter((c) => c.status === "want");
@@ -21,21 +36,28 @@ export default async function WatchlistPage() {
 
       {watching.length > 0 && (
         <section className="mb-12">
-          <PageHeading title="Carrying on" count={watching.length} />
+          <PageHeading title="Carrying on" count={watching.length}>
+            <MediaFilter basePath="/" current={current} counts={tally} />
+          </PageHeading>
           <Grid>
-            {watching.map((show) => (
-              <PosterCard key={show.tmdbId} show={show} people={people} />
+            {watching.map((title) => (
+              <PosterCard key={title.id} title={title} people={people} />
             ))}
           </Grid>
         </section>
       )}
 
       <section>
-        <PageHeading title="Want to watch" count={want.length} />
+        <PageHeading title="Want to watch" count={want.length}>
+          {watching.length === 0 && (
+            <MediaFilter basePath="/" current={current} counts={tally} />
+          )}
+        </PageHeading>
+
         {want.length === 0 && watching.length === 0 ? (
           <EmptyState
             title="Nothing on the list yet."
-            hint="Search for a show up top and add it."
+            hint="Search for something up top and add it."
           />
         ) : want.length === 0 ? (
           <p className="text-sm text-ink-faint">
@@ -47,8 +69,8 @@ export default async function WatchlistPage() {
           </p>
         ) : (
           <Grid>
-            {want.map((show) => (
-              <PosterCard key={show.tmdbId} show={show} people={people} showProgress={false} />
+            {want.map((title) => (
+              <PosterCard key={title.id} title={title} people={people} showProgress={false} />
             ))}
           </Grid>
         )}

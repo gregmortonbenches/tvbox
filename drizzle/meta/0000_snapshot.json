@@ -1,5 +1,5 @@
 {
-  "id": "15695fe1-4dfd-4a6b-bcb8-c46ee2c6b081",
+  "id": "0867e4e1-60e3-4aa5-bd77-6cf15a96f786",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8,15 +8,22 @@
       "name": "episodes",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "tmdb_id": {
           "name": "tmdb_id",
           "type": "integer",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
-        "show_tmdb_id": {
-          "name": "show_tmdb_id",
-          "type": "integer",
+        "title_id": {
+          "name": "title_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -64,11 +71,11 @@
         }
       },
       "indexes": {
-        "episodes_show_idx": {
-          "name": "episodes_show_idx",
+        "episodes_title_idx": {
+          "name": "episodes_title_idx",
           "columns": [
             {
-              "expression": "show_tmdb_id",
+              "expression": "title_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -81,15 +88,15 @@
         }
       },
       "foreignKeys": {
-        "episodes_show_tmdb_id_shows_tmdb_id_fk": {
-          "name": "episodes_show_tmdb_id_shows_tmdb_id_fk",
+        "episodes_title_id_titles_id_fk": {
+          "name": "episodes_title_id_titles_id_fk",
           "tableFrom": "episodes",
-          "tableTo": "shows",
+          "tableTo": "titles",
           "columnsFrom": [
-            "show_tmdb_id"
+            "title_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -97,11 +104,18 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "episodes_show_season_episode_key": {
-          "name": "episodes_show_season_episode_key",
+        "episodes_tmdb_id_unique": {
+          "name": "episodes_tmdb_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "show_tmdb_id",
+            "tmdb_id"
+          ]
+        },
+        "episodes_title_season_episode_key": {
+          "name": "episodes_title_season_episode_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "title_id",
             "season_number",
             "episode_number"
           ]
@@ -115,9 +129,9 @@
       "name": "list_entries",
       "schema": "",
       "columns": {
-        "show_tmdb_id": {
-          "name": "show_tmdb_id",
-          "type": "integer",
+        "title_id": {
+          "name": "title_id",
+          "type": "uuid",
           "primaryKey": true,
           "notNull": true
         },
@@ -173,15 +187,15 @@
         }
       },
       "foreignKeys": {
-        "list_entries_show_tmdb_id_shows_tmdb_id_fk": {
-          "name": "list_entries_show_tmdb_id_shows_tmdb_id_fk",
+        "list_entries_title_id_titles_id_fk": {
+          "name": "list_entries_title_id_titles_id_fk",
           "tableFrom": "list_entries",
-          "tableTo": "shows",
+          "tableTo": "titles",
           "columnsFrom": [
-            "show_tmdb_id"
+            "title_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -223,15 +237,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "show_tmdb_id": {
-          "name": "show_tmdb_id",
-          "type": "integer",
+        "title_id": {
+          "name": "title_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "episode_tmdb_id": {
-          "name": "episode_tmdb_id",
-          "type": "integer",
+        "episode_id": {
+          "name": "episode_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -263,11 +277,11 @@
         }
       },
       "indexes": {
-        "ratings_show_idx": {
-          "name": "ratings_show_idx",
+        "ratings_title_idx": {
+          "name": "ratings_title_idx",
           "columns": [
             {
-              "expression": "show_tmdb_id",
+              "expression": "title_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -278,8 +292,8 @@
           "method": "btree",
           "with": {}
         },
-        "ratings_one_per_user_per_show": {
-          "name": "ratings_one_per_user_per_show",
+        "ratings_one_per_user_per_title": {
+          "name": "ratings_one_per_user_per_title",
           "columns": [
             {
               "expression": "user_id",
@@ -288,14 +302,14 @@
               "nulls": "last"
             },
             {
-              "expression": "show_tmdb_id",
+              "expression": "title_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"ratings\".\"episode_tmdb_id\" IS NULL",
+          "where": "\"ratings\".\"episode_id\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -310,14 +324,14 @@
               "nulls": "last"
             },
             {
-              "expression": "episode_tmdb_id",
+              "expression": "episode_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"ratings\".\"episode_tmdb_id\" IS NOT NULL",
+          "where": "\"ratings\".\"episode_id\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -337,28 +351,28 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "ratings_show_tmdb_id_shows_tmdb_id_fk": {
-          "name": "ratings_show_tmdb_id_shows_tmdb_id_fk",
+        "ratings_title_id_titles_id_fk": {
+          "name": "ratings_title_id_titles_id_fk",
           "tableFrom": "ratings",
-          "tableTo": "shows",
+          "tableTo": "titles",
           "columnsFrom": [
-            "show_tmdb_id"
+            "title_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "ratings_episode_tmdb_id_episodes_tmdb_id_fk": {
-          "name": "ratings_episode_tmdb_id_episodes_tmdb_id_fk",
+        "ratings_episode_id_episodes_id_fk": {
+          "name": "ratings_episode_id_episodes_id_fk",
           "tableFrom": "ratings",
           "tableTo": "episodes",
           "columnsFrom": [
-            "episode_tmdb_id"
+            "episode_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -381,9 +395,9 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "show_tmdb_id": {
-          "name": "show_tmdb_id",
-          "type": "integer",
+        "title_id": {
+          "name": "title_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -433,15 +447,15 @@
         }
       },
       "foreignKeys": {
-        "recommendations_show_tmdb_id_shows_tmdb_id_fk": {
-          "name": "recommendations_show_tmdb_id_shows_tmdb_id_fk",
+        "recommendations_title_id_titles_id_fk": {
+          "name": "recommendations_title_id_titles_id_fk",
           "tableFrom": "recommendations",
-          "tableTo": "shows",
+          "tableTo": "titles",
           "columnsFrom": [
-            "show_tmdb_id"
+            "title_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -449,11 +463,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "recommendations_one_per_show_key": {
-          "name": "recommendations_one_per_show_key",
+        "recommendations_title_id_unique": {
+          "name": "recommendations_title_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "show_tmdb_id"
+            "title_id"
           ]
         }
       },
@@ -461,14 +475,28 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.shows": {
-      "name": "shows",
+    "public.titles": {
+      "name": "titles",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "tmdb_id": {
           "name": "tmdb_id",
           "type": "integer",
-          "primaryKey": true,
+          "primaryKey": false,
+          "notNull": true
+        },
+        "media_type": {
+          "name": "media_type",
+          "type": "media_type",
+          "typeSchema": "public",
+          "primaryKey": false,
           "notNull": true
         },
         "name": {
@@ -495,14 +523,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "first_air_date": {
-          "name": "first_air_date",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_air_date": {
-          "name": "last_air_date",
+        "release_date": {
+          "name": "release_date",
           "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
@@ -510,6 +532,12 @@
         "status": {
           "name": "status",
           "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_air_date": {
+          "name": "last_air_date",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -525,6 +553,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "runtime": {
+          "name": "runtime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "cached_at": {
           "name": "cached_at",
           "type": "timestamp with time zone",
@@ -533,10 +567,35 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "titles_media_type_idx": {
+          "name": "titles_media_type_idx",
+          "columns": [
+            {
+              "expression": "media_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "titles_tmdb_media_key": {
+          "name": "titles_tmdb_media_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tmdb_id",
+            "media_type"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -598,23 +657,30 @@
       "name": "watches",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "user_id": {
           "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "episode_tmdb_id": {
-          "name": "episode_tmdb_id",
-          "type": "integer",
+        "title_id": {
+          "name": "title_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "show_tmdb_id": {
-          "name": "show_tmdb_id",
-          "type": "integer",
+        "episode_id": {
+          "name": "episode_id",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "watched_at": {
           "name": "watched_at",
@@ -625,8 +691,8 @@
         }
       },
       "indexes": {
-        "watches_user_show_idx": {
-          "name": "watches_user_show_idx",
+        "watches_user_title_idx": {
+          "name": "watches_user_title_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -635,7 +701,7 @@
               "nulls": "last"
             },
             {
-              "expression": "show_tmdb_id",
+              "expression": "title_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -646,17 +712,61 @@
           "method": "btree",
           "with": {}
         },
-        "watches_show_idx": {
-          "name": "watches_show_idx",
+        "watches_title_idx": {
+          "name": "watches_title_idx",
           "columns": [
             {
-              "expression": "show_tmdb_id",
+              "expression": "title_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "watches_one_per_user_per_film": {
+          "name": "watches_one_per_user_per_film",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"watches\".\"episode_id\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "watches_one_per_user_per_episode": {
+          "name": "watches_one_per_user_per_episode",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "episode_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"watches\".\"episode_id\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -676,42 +786,34 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "watches_episode_tmdb_id_episodes_tmdb_id_fk": {
-          "name": "watches_episode_tmdb_id_episodes_tmdb_id_fk",
+        "watches_title_id_titles_id_fk": {
+          "name": "watches_title_id_titles_id_fk",
           "tableFrom": "watches",
-          "tableTo": "episodes",
+          "tableTo": "titles",
           "columnsFrom": [
-            "episode_tmdb_id"
+            "title_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "watches_show_tmdb_id_shows_tmdb_id_fk": {
-          "name": "watches_show_tmdb_id_shows_tmdb_id_fk",
+        "watches_episode_id_episodes_id_fk": {
+          "name": "watches_episode_id_episodes_id_fk",
           "tableFrom": "watches",
-          "tableTo": "shows",
+          "tableTo": "episodes",
           "columnsFrom": [
-            "show_tmdb_id"
+            "episode_id"
           ],
           "columnsTo": [
-            "tmdb_id"
+            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "watches_user_id_episode_tmdb_id_pk": {
-          "name": "watches_user_id_episode_tmdb_id_pk",
-          "columns": [
-            "user_id",
-            "episode_tmdb_id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -719,6 +821,14 @@
     }
   },
   "enums": {
+    "public.media_type": {
+      "name": "media_type",
+      "schema": "public",
+      "values": [
+        "tv",
+        "film"
+      ]
+    },
     "public.recommendation_source": {
       "name": "recommendation_source",
       "schema": "public",

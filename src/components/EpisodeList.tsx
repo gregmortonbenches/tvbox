@@ -5,7 +5,8 @@ import { toggleEpisode, toggleSeason } from "@/lib/actions";
 import type { CurrentUser } from "@/lib/session";
 
 export type EpisodeRow = {
-  tmdbId: number;
+  /** Internal uuid — what a watch row references. */
+  id: string;
   seasonNumber: number;
   episodeNumber: number;
   name: string | null;
@@ -25,13 +26,15 @@ export type EpisodeRow = {
  * and the next LiveRefresh poll re-syncs from the database regardless.
  */
 export function EpisodeList({
-  showTmdbId,
+  titleId,
+  tmdbId,
   episodes,
   watchKeys,
   people,
   currentUserId,
 }: {
-  showTmdbId: number;
+  titleId: string;
+  tmdbId: number;
   episodes: EpisodeRow[];
   watchKeys: string[];
   people: CurrentUser[];
@@ -53,22 +56,22 @@ export function EpisodeList({
     // Open the earliest season with anything unwatched — usually where you're up to.
     seasons.find((s) =>
       episodes.some(
-        (e) => e.seasonNumber === s && !watchKeys.includes(`${currentUserId}:${e.tmdbId}`),
+        (e) => e.seasonNumber === s && !watchKeys.includes(`${currentUserId}:${e.id}`),
       ),
     ) ?? seasons[0] ?? 1,
   );
 
-  function tick(episodeTmdbId: number) {
-    const key = `${currentUserId}:${episodeTmdbId}`;
+  function tick(episodeId: string) {
+    const key = `${currentUserId}:${episodeId}`;
     startTransition(async () => {
       addOptimistic(key);
-      await toggleEpisode(episodeTmdbId, showTmdbId);
+      await toggleEpisode(episodeId, titleId, tmdbId);
     });
   }
 
   function tickSeason(season: number, markWatched: boolean) {
     startTransition(async () => {
-      await toggleSeason(showTmdbId, season, markWatched);
+      await toggleSeason(titleId, tmdbId, season, markWatched);
     });
   }
 
@@ -79,7 +82,7 @@ export function EpisodeList({
           .filter((e) => e.seasonNumber === season)
           .sort((a, b) => a.episodeNumber - b.episodeNumber);
         const mineWatched = rows.filter((e) =>
-          optimisticKeys.has(`${currentUserId}:${e.tmdbId}`),
+          optimisticKeys.has(`${currentUserId}:${e.id}`),
         ).length;
         const allMine = mineWatched === rows.length && rows.length > 0;
         const isOpen = openSeason === season;
@@ -119,7 +122,7 @@ export function EpisodeList({
             {isOpen && (
               <ul className="divide-y divide-line border-t border-line">
                 {rows.map((e) => (
-                  <li key={e.tmdbId} className="flex items-center gap-3 px-4 py-2.5">
+                  <li key={e.id} className="flex items-center gap-3 px-4 py-2.5">
                     <span className="w-10 shrink-0 font-mono text-xs text-ink-faint">
                       {season}×{String(e.episodeNumber).padStart(2, "0")}
                     </span>
@@ -133,14 +136,14 @@ export function EpisodeList({
                     )}
                     <span className="flex shrink-0 items-center gap-1.5">
                       {people.map((p) => {
-                        const watched = optimisticKeys.has(`${p.id}:${e.tmdbId}`);
+                        const watched = optimisticKeys.has(`${p.id}:${e.id}`);
                         const isMe = p.id === currentUserId;
                         const label = `${p.displayName}: ${e.name ?? `episode ${e.episodeNumber}`} ${watched ? "watched" : "not watched"}`;
                         return isMe ? (
                           <button
                             key={p.id}
                             type="button"
-                            onClick={() => tick(e.tmdbId)}
+                            onClick={() => tick(e.id)}
                             aria-label={label}
                             aria-pressed={watched}
                             title={`${p.displayName} (you)`}

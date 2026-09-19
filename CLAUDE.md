@@ -6,10 +6,13 @@ way they are.
 
 ## What this project is
 
-A private TV watchlist for exactly two people — Greg and Hannah. Letterboxd is
-the deliberate reference for both look and interaction (poster-first grids,
-half-star ratings, dark canvas, minimal chrome), but the scope is much smaller:
-no social graph, no public profiles, no sign-up, no reviews feed.
+A private watchlist for exactly two people — Greg and Hannah — covering both
+TV series and films. Letterboxd is the deliberate reference for both look and
+interaction (poster-first grids, half-star ratings, dark canvas, minimal
+chrome), but the scope is much smaller: no social graph, no public profiles,
+no sign-up, no reviews feed.
+
+The name is now slightly inaccurate — it does films too.
 
 The core loop is: search → add to a shared watchlist → tick episodes as you
 watch → mark watched → rate it → get suggestions for what's next.
@@ -20,7 +23,7 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
 
 | File | Purpose |
 |---|---|
-| `src/lib/db/schema.ts` | Drizzle schema. Long comments explain the shared-vs-per-person split — read them before changing a table. |
+| `src/lib/db/schema.ts` | Drizzle schema. Long comments explain the shared-vs-per-person split and why `titles` has a surrogate key — read them before changing a table. |
 | `src/lib/queries.ts` | Read side. `getShowCards()` is the one that matters: it fills every poster grid in 3 queries, not N+1. |
 | `src/lib/actions.ts` | Every write, as server actions. All go through `requireUser()`. |
 | `src/lib/tmdb.ts` | TMDB client. Server-only, Bearer auth, per-endpoint revalidate windows. |
@@ -30,11 +33,26 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
 | `src/lib/session.ts` | `getCurrentUser()` / `getAllUsers()`. |
 | `src/lib/walrusLines.ts` | What the mascot says, and how a line is picked. |
 | `src/proxy.ts` | Route gating. Was `middleware.ts` — Next 16 renamed the convention. |
+| `src/components/TitleHero.tsx` | The header `/tv/[id]` and `/film/[id]` share. Only the metadata line differs, so that's a prop. |
+| `data/` | Imported watch history. Personal, but this is a private repo. |
 | `src/components/WalrusArt.tsx` | The mascot's artwork, alone, so it can be swapped in one file. |
 | `scripts/seed.mts` | Creates the two profiles. Idempotent. |
 | `drizzle/` | Generated SQL migrations — committed on purpose. |
 
 ## Decisions worth knowing
+
+- **`titles` holds TV and films together, with a SURROGATE key.** TMDB numbers
+  series and films in separate sequences, so a tmdb_id is not unique on its own
+  — movie 1396 and TV 1396 are different works. The natural key is the pair
+  `(tmdb_id, media_type)`, kept as a unique constraint; a surrogate `id` keeps
+  the five referencing tables' foreign keys single-column instead of composite.
+  Routes are `/tv/[tmdbId]` and `/film/[tmdbId]` because TMDB ids are the
+  stable, shareable thing — the internal uuid never appears in a URL.
+
+- **A film's watch is one row with a null `episode_id`.** Films have no
+  episodes, so their tick is binary rather than a progress bar, guarded by the
+  `watches_one_per_user_per_film` partial unique index. Marking a film seen also
+  moves it to "watched" — unlike a series there's no in-between state.
 
 - **The watchlist is shared; ticks and ratings are per-person.** `list_entries`
   is keyed by show alone (one list, not one each). `watches` and `ratings` carry
@@ -130,11 +148,14 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
 
 ## Known gaps
 
-- **The show page, search, and Claude-backed recommendations have not been
-  exercised against a live TMDB token** — they're typechecked and build clean,
-  but the end-to-end verification done so far covered login, the profile picker,
-  the watchlist, the archive and the rating/progress rendering against a real
-  Postgres with seeded data. Check those three paths first if something's off.
+- **Anything that fetches from TMDB is unverified against a live token** — the
+  `/tv/[id]` and `/film/[id]` pages, search, and Claude-backed recommendations
+  typecheck and build clean, but have never made a real API call here. What HAS
+  been verified end to end against a real Postgres: migrations, the seed, both
+  auth gates, the watchlist, the archive, the media filter, per-person progress
+  bars, film seen-dots and half-star ratings — including a deliberate test that
+  a film and a series sharing tmdb_id 1396 coexist. Check the TMDB paths first
+  if something's off.
 - `npm audit` reports 4 moderate advisories, all transitive `esbuild` under
   `drizzle-kit` — a dev dependency, never in the runtime bundle. `npm audit fix
   --force` "fixes" it by downgrading drizzle-kit to 0.18.1, which is ancient and

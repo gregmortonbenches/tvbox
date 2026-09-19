@@ -2,42 +2,40 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import { inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "./db";
-import { listEntries, recommendations, shows } from "./db/schema";
+import { listEntries, recommendations, titles } from "./db/schema";
 import { getTasteProfile } from "./queries";
-import { cacheShowSummary } from "./cache";
-import { searchShows, type TmdbShowSummary } from "./tmdb";
+import { cacheTitleSummary } from "./cache";
+import { getSimilar, searchTitles, type TitleSummary } from "./tmdb";
 
 /*
  * "A section where you recommend things to us."
  *
  * Two strategies, picked at runtime:
- *
  *   1. ANTHROPIC_API_KEY set -> ask Claude, given what you've both rated and
- *      what's already on the list. Better suggestions, because it can reason
- *      about *why* you liked something rather than matching metadata.
+ *      what's already listed. Better picks, because it can reason about *why*
+ *      you liked something rather than matching metadata.
  *   2. No key -> TMDB's own "recommendations" endpoint seeded from your
- *      highest-rated shows. Needs no extra account and is a reasonable
- *      fallback, just blunter.
+ *      highest-rated titles. No extra account needed, just blunter.
  *
- * Either way the output is rows in `recommendations` with a human-readable
- * `reason`, so the page can say why something was suggested instead of
- * presenting an unexplained list.
+ * Either way the output is rows in `recommendations` with a readable
+ * `reason`, so the page can say why something was suggested.
  */
 
 const SuggestionList = z.object({
   suggestions: z
     .array(
       z.object({
-        title: z.string().describe("The show's title, as commonly known in English"),
-        year: z.number().describe("Year it first aired, to disambiguate remakes"),
+        title: z.string().describe("The title, as commonly known in English"),
+        year: z.number().describe("Year of first release, to disambiguate remakes"),
+        mediaType: z.enum(["tv", "film"]).describe("Whether this is a TV series or a film"),
         reason: z
           .string()
           .describe("One or two sentences, addressed to the pair, on why they'd like it"),
       }),
     )
-    .describe("Between 5 and 8 suggestions"),
+    .describe("Between 5 and 8 suggestions, a mix of TV and film unless their taste skews one way"),
 });
 
 export type GenerateResult = {
@@ -47,53 +45,49 @@ export type GenerateResult = {
 };
 
 export async function generateRecommendations(): Promise<GenerateResult> {
-  const [taste, existing] = await Promise.all([
+  const [taste, listed] = await Promise.all([
     getTasteProfile(),
-    db.select({ tmdbId: listEntries.showTmdbId }).from(listEntries),
+    db
+      .select({ titleId: listEntries.titleId, name: titles.name })
+      .from(listEntries)
+      .innerJoin(titles, eq(titles.id, listEntries.titleId)),
   ]);
 
-  const excludeIds = new Set(existing.map((e) => e.tmdbId));
+  const excludeTitleIds = new Set(listed.map((e) => e.titleId));
 
-  const result = process.env.ANTHROPIC_API_KEY
-    ? await viaClaude(taste, excludeIds)
-    : await viaTmdb(taste, excludeIds);
-
-  return result;
+  return process.env.ANTHROPIC_API_KEY
+    ? viaClaude(taste, listed, excludeTitleIds)
+    : viaTmdb(taste, excludeTitleIds);
 }
 
 /* ---- Strategy 1: Claude -------------------------------------------------- */
 
 async function viaClaude(
   taste: Awaited<ReturnType<typeof getTasteProfile>>,
-  excludeIds: Set<number>,
+  listed: { name: string }[],
+  excludeTitleIds: Set<string>,
 ): Promise<GenerateResult> {
   const client = new Anthropic();
 
-  const liked = taste
-    .filter((t) => t.stars >= 7) // 3.5 stars and up
-    .map((t) => `${t.name} — ${t.rater} gave it ${t.stars / 2}/5`);
-  const disliked = taste
-    .filter((t) => t.stars <= 4) // 2 stars and under
-    .map((t) => `${t.name} — ${t.rater} gave it ${t.stars / 2}/5`);
+  const label = (t: (typeof taste)[number]) =>
+    `${t.name} (${t.mediaType === "film" ? "film" : "TV"}) — ${t.rater} gave it ${t.stars / 2}/5`;
 
-  // Titles already on the list, so Claude doesn't suggest them back.
-  const onList = await db
-    .select({ name: shows.name })
-    .from(shows)
-    .where(inArray(shows.tmdbId, [...excludeIds].length ? [...excludeIds] : [-1]));
+  const liked = taste.filter((t) => t.stars >= 7).map(label);
+  const disliked = taste.filter((t) => t.stars <= 4).map(label);
 
   const prompt = [
-    "Two people, Greg and Hannah, watch TV together and want suggestions for what to watch next.",
+    "Two people, Greg and Hannah, watch TV and films together and want suggestions for what to watch next.",
     "",
-    liked.length ? `Shows they rated highly:\n${liked.join("\n")}` : "They haven't rated anything highly yet.",
-    disliked.length ? `\nShows they didn't get on with:\n${disliked.join("\n")}` : "",
-    onList.length
-      ? `\nAlready on their list — do NOT suggest these:\n${onList.map((s) => s.name).join(", ")}`
+    liked.length ? `Rated highly:\n${liked.join("\n")}` : "They haven't rated anything highly yet.",
+    disliked.length ? `\nDidn't get on with:\n${disliked.join("\n")}` : "",
+    listed.length
+      ? `\nAlready on their list — do NOT suggest these:\n${listed.map((s) => s.name).join(", ")}`
       : "",
     "",
-    "Suggest TV shows they'd enjoy together. Favour things that are actually findable,",
-    "and give a real reason tied to what they've liked rather than generic praise.",
-    "If they haven't rated much yet, pick well-regarded, broadly appealing shows and say so.",
+    "Suggest things they'd enjoy together — TV series or films, whichever fits.",
+    "Favour things that are actually findable, and give a real reason tied to what",
+    "they've liked rather than generic praise. If they haven't rated much yet, pick",
+    "well-regarded, broadly appealing titles and say so.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -107,10 +101,10 @@ async function viaClaude(
       messages: [{ role: "user", content: prompt }],
       output_config: {
         format: zodOutputFormat(SuggestionList),
-        // Picking shows off a short list of ratings is not a hard reasoning
+        // Picking titles off a short list of ratings is not a hard reasoning
         // problem, and thinking tokens bill as output. "medium" keeps the
-        // suggestions sharp while cutting the per-run cost roughly in half
-        // versus the default. Raise to "high" if the picks feel lazy.
+        // suggestions sharp while roughly halving the per-run cost versus the
+        // default. Raise to "high" if the picks feel lazy.
         effort: "medium",
       },
     });
@@ -141,21 +135,24 @@ async function viaClaude(
   }
 
   /*
-   * Claude returns titles, not TMDB ids — resolve each one by searching.
-   * A title that doesn't resolve is dropped rather than guessed at: a
-   * recommendation pointing at the wrong show is worse than one fewer.
+   * Claude returns titles, not TMDB ids — resolve each by searching the right
+   * endpoint for its media type. A title that doesn't resolve is DROPPED, not
+   * guessed at: a recommendation pointing at the wrong thing is worse than
+   * one fewer.
    */
   let added = 0;
   for (const s of parsed.suggestions) {
-    const matches = await searchShows(s.title);
+    const matches = await searchTitles(s.title, s.mediaType);
     const match = pickMatch(matches, s.year);
-    if (!match || excludeIds.has(match.id)) continue;
+    if (!match) continue;
 
-    await cacheShowSummary(match);
+    const titleId = await cacheTitleSummary(match);
+    if (excludeTitleIds.has(titleId)) continue;
+
     const inserted = await db
       .insert(recommendations)
-      .values({ showTmdbId: match.id, source: "claude", reason: s.reason })
-      .onConflictDoNothing({ target: recommendations.showTmdbId })
+      .values({ titleId, source: "claude", reason: s.reason })
+      .onConflictDoNothing({ target: recommendations.titleId })
       .returning({ id: recommendations.id });
     if (inserted.length > 0) added++;
   }
@@ -163,54 +160,51 @@ async function viaClaude(
   return { added, source: "claude" };
 }
 
-/** Prefer an exact first-air-year match; fall back to TMDB's own ranking. */
-function pickMatch(results: TmdbShowSummary[], year: number): TmdbShowSummary | null {
+/** Prefer an exact release-year match; fall back to TMDB's own ranking. */
+function pickMatch(results: TitleSummary[], year: number): TitleSummary | null {
   if (results.length === 0) return null;
-  const exact = results.find((r) => r.first_air_date?.startsWith(String(year)));
-  return exact ?? results[0];
+  return results.find((r) => r.releaseDate?.startsWith(String(year))) ?? results[0];
 }
 
 /* ---- Strategy 2: TMDB similar -------------------------------------------- */
 
 async function viaTmdb(
   taste: Awaited<ReturnType<typeof getTasteProfile>>,
-  excludeIds: Set<number>,
+  excludeTitleIds: Set<string>,
 ): Promise<GenerateResult> {
   const seeds = taste.filter((t) => t.stars >= 7).slice(0, 3);
   if (seeds.length === 0) {
     return {
       added: 0,
       source: "tmdb_similar",
-      note: "Rate a few shows 3.5 stars or higher and suggestions will appear here.",
+      note: "Rate a few things 3.5 stars or higher and suggestions will appear here.",
     };
   }
-
-  const token = process.env.TMDB_ACCESS_TOKEN;
-  if (!token) return { added: 0, source: "tmdb_similar", note: "TMDB_ACCESS_TOKEN is not set." };
+  if (!process.env.TMDB_ACCESS_TOKEN) {
+    return { added: 0, source: "tmdb_similar", note: "TMDB_ACCESS_TOKEN is not set." };
+  }
 
   let added = 0;
   for (const seed of seeds) {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/tv/${seed.tmdbId}/recommendations`,
-      {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        next: { revalidate: 60 * 60 * 24 },
-      },
-    );
-    if (!res.ok) continue;
+    let similar: TitleSummary[] = [];
+    try {
+      similar = await getSimilar(seed.tmdbId, seed.mediaType);
+    } catch {
+      continue; // one dud seed shouldn't abort the whole refresh
+    }
 
-    const data = (await res.json()) as { results: TmdbShowSummary[] };
-    for (const show of data.results.slice(0, 4)) {
-      if (excludeIds.has(show.id)) continue;
-      await cacheShowSummary(show);
+    for (const candidate of similar.slice(0, 4)) {
+      const titleId = await cacheTitleSummary(candidate);
+      if (excludeTitleIds.has(titleId)) continue;
+
       const inserted = await db
         .insert(recommendations)
         .values({
-          showTmdbId: show.id,
+          titleId,
           source: "tmdb_similar",
           reason: `Because you both liked ${seed.name}.`,
         })
-        .onConflictDoNothing({ target: recommendations.showTmdbId })
+        .onConflictDoNothing({ target: recommendations.titleId })
         .returning({ id: recommendations.id });
       if (inserted.length > 0) added++;
     }

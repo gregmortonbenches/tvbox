@@ -1,8 +1,8 @@
 # tvbox
 
-A private watchlist for two. Search TV shows, queue them up, tick off episodes
-as you watch, archive what you've finished, rate things out of five, and get
-suggestions for what to watch next.
+A private watchlist for two, covering both TV and films. Search, queue things
+up, tick off episodes as you watch, archive what you've finished, rate things
+out of five, and get suggestions for what to watch next.
 
 Built for Greg and Hannah specifically — there's no sign-up, no social feed,
 and no public profiles. Two people, one shared list.
@@ -10,9 +10,11 @@ and no public profiles. Two people, one shared list.
 ## What it does
 
 - **Watchlist** — a single shared list of what you want to watch, split into
-  things you've started ("Carrying on") and things you haven't.
-- **Episode ticking** — open a show, tick episodes as you watch them. Both
-  people's progress shows on every row, so you can see who's ahead.
+  things you've started ("Carrying on") and things you haven't. Filter by
+  All / TV / Films.
+- **Episode ticking** — open a series, tick episodes as you watch them. Both
+  people's progress shows on every row, so you can see who's ahead. Films get a
+  single "seen it" toggle instead, since there's nothing to be partway through.
 - **Archive** — everything you've finished, plus a quieter section for things
   you gave up on.
 - **Ratings** — half-stars out of five, one rating each, shown side by side.

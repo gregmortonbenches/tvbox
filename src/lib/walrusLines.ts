@@ -13,8 +13,9 @@
 
 export type WalrusContext =
   | { page: "watchlist"; want: number; watching: number }
-  | { page: "archive"; watched: number; dropped: number }
+  | { page: "archive"; watched: number; dropped: number; films: number }
   | { page: "show"; name: string; yourProgress: number; theirProgress: number; theirName: string }
+  | { page: "film"; name: string; youSeen: boolean; theySeen: boolean; theirName: string }
   | { page: "recommendations"; count: number }
   | { page: "search"; results: number; query: string };
 
@@ -77,6 +78,15 @@ export function walrusSays(ctx: WalrusContext): string {
       if (ctx.dropped > ctx.watched) {
         return `${ctx.dropped} abandoned against ${ctx.watched} finished. Brutal, but honest.`;
       }
+      if (ctx.films > 200) {
+        return choose(
+          [
+            `${ctx.films} films. That is not a hobby, that is a condition.`,
+            `${ctx.films} films in here. I've been in the sea that whole time.`,
+          ],
+          `films-${ctx.films}`,
+        );
+      }
       return choose(
         [
           `${ctx.watched} seen through to the end. That's real commitment.`,
@@ -84,6 +94,21 @@ export function walrusSays(ctx: WalrusContext): string {
           `${ctx.watched} down. The tusks of experience.`,
         ],
         `arch-${ctx.watched}`,
+      );
+    }
+
+    case "film": {
+      if (ctx.youSeen && ctx.theySeen) {
+        return choose(
+          ["You've both seen this one. Rate it, then.", "Seen by all parties. Verdicts?"],
+          ctx.name,
+        );
+      }
+      if (ctx.theySeen) return `${ctx.theirName} has seen this and you haven't. Awkward.`;
+      if (ctx.youSeen) return `You've seen it, ${ctx.theirName} hasn't. Don't spoil it.`;
+      return choose(
+        ["Neither of you has seen this. An evening presents itself.", "Unwatched. Go on."],
+        ctx.name,
       );
     }
 

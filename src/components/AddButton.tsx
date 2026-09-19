@@ -2,8 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { addToWatchlist } from "@/lib/actions";
+import type { MediaType } from "@/lib/db/schema";
 
-export function AddButton({ tmdbId, alreadyOn }: { tmdbId: number; alreadyOn: boolean }) {
+export function AddButton({
+  tmdbId,
+  mediaType,
+  alreadyOn,
+}: {
+  tmdbId: number;
+  mediaType: MediaType;
+  alreadyOn: boolean;
+}) {
   const [added, setAdded] = useState(alreadyOn);
   const [pending, startTransition] = useTransition();
 
@@ -23,7 +32,7 @@ export function AddButton({ tmdbId, alreadyOn }: { tmdbId: number; alreadyOn: bo
         startTransition(async () => {
           setAdded(true);
           try {
-            await addToWatchlist(tmdbId);
+            await addToWatchlist(tmdbId, mediaType);
           } catch {
             setAdded(false); // put the button back if the write failed
           }

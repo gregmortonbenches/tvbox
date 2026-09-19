@@ -8,6 +8,7 @@ import { Walrus } from "@/components/Walrus";
 import { getRecommendations } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import { posterUrl } from "@/lib/tmdb";
+import { titleHref } from "@/lib/queries";
 
 const SOURCE_LABEL: Record<string, string> = {
   claude: "suggested by Claude",
@@ -38,13 +39,14 @@ export default async function RecommendationsPage() {
         <ul className="space-y-4">
           {recs.map((rec) => {
             const poster = posterUrl(rec.posterPath, "w342");
+            const href = titleHref(rec.mediaType, rec.tmdbId);
             return (
               <li
                 key={rec.id}
                 className="flex gap-4 rounded-lg border border-line bg-surface p-4"
               >
                 <Link
-                  href={`/show/${rec.tmdbId}`}
+                  href={href}
                   className="relative aspect-[2/3] w-20 shrink-0 overflow-hidden rounded border border-line"
                 >
                   {poster && (
@@ -53,11 +55,11 @@ export default async function RecommendationsPage() {
                 </Link>
 
                 <div className="min-w-0 flex-1">
-                  <Link href={`/show/${rec.tmdbId}`} className="hover:text-accent">
+                  <Link href={href} className="hover:text-accent">
                     <p className="font-medium">
                       {rec.name}{" "}
                       <span className="font-normal text-ink-faint">
-                        {rec.firstAirDate?.slice(0, 4)}
+                        {rec.releaseDate?.slice(0, 4)}
                       </span>
                     </p>
                   </Link>
@@ -67,11 +69,12 @@ export default async function RecommendationsPage() {
                   </p>
 
                   <p className="mt-2 text-[11px] uppercase tracking-wider text-ink-faint">
+                    {rec.mediaType === "film" ? "Film" : "TV"} ·{" "}
                     {SOURCE_LABEL[rec.source] ?? rec.source}
                   </p>
 
                   <div className="mt-3 flex items-center gap-3">
-                    <AddButton tmdbId={rec.tmdbId} alreadyOn={false} />
+                    <AddButton tmdbId={rec.tmdbId} mediaType={rec.mediaType} alreadyOn={false} />
                     <DismissButton id={rec.id} />
                   </div>
                 </div>

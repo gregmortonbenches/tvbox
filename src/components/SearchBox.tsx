@@ -18,8 +18,8 @@ export function SearchBox() {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search shows…"
-        aria-label="Search shows"
+        placeholder="Search…"
+        aria-label="Search films and TV"
         className="w-40 rounded-full border border-line bg-surface px-4 py-1.5 text-sm text-ink placeholder:text-ink-faint transition-[width,border-color] focus:w-56 focus:border-accent focus:outline-none"
       />
     </form>
