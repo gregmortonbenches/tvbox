@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { DirectorFavouriteToggle } from "@/components/DirectorFavouriteToggle";
 import { FilmWatchToggle } from "@/components/FilmWatchToggle";
 import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
 import { ensureTitleCached } from "@/lib/cache";
-import { getFilmWatchers, getListEntry, getTitleRatings } from "@/lib/queries";
+import { getFilmWatchers, getFavouriteDirectorIds, getListEntry, getTitleRatings } from "@/lib/queries";
 import { getAllUsers, getCurrentUser } from "@/lib/session";
 
 export default async function FilmPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,10 +18,11 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
   const { detail, titleId, stored } = await ensureTitleCached(tmdbId, "film");
 
-  const [watchers, ratings, entry] = await Promise.all([
+  const [watchers, ratings, entry, favouriteDirectorIds] = await Promise.all([
     getFilmWatchers(titleId),
     getTitleRatings(titleId),
     getListEntry(titleId),
+    getFavouriteDirectorIds(),
   ]);
 
   const other = people.find((p) => p.id !== user.id);
@@ -63,6 +65,24 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       </TitleHero>
 
       <ListEntryPanel entry={entry} mediaType="film" tmdbId={tmdbId} people={people} />
+
+      {detail.directors.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+            {detail.directors.length === 1 ? "Director" : "Directors"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {detail.directors.map((d) => (
+              <DirectorFavouriteToggle
+                key={d.id}
+                tmdbPersonId={d.id}
+                name={d.name}
+                isFavourite={favouriteDirectorIds.has(d.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {other && (
         <p className="mt-8 text-sm text-ink-faint">

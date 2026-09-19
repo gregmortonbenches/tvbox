@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/", label: "Watchlist" },
   { href: "/archive", label: "Watched" },
   { href: "/recommendations", label: "Recommendations" },
+  { href: "/chat", label: "Chat" },
 ];
 
 export function Nav({ user }: { user: CurrentUser | null }) {

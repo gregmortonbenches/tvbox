@@ -7,7 +7,9 @@ import { redirect } from "next/navigation";
 import { db } from "./db";
 import {
   episodes,
+  favouriteDirectors,
   listEntries,
+  messages,
   ratings,
   recommendations,
   watches,
@@ -405,6 +407,52 @@ export async function setNote(
     .set({ note: trimmed.length > 0 ? trimmed.slice(0, 500) : null })
     .where(eq(listEntries.titleId, titleId));
   revalidateLists(mediaType, tmdbId);
+}
+
+/* ---- drag-and-drop reorder ----------------------------------------------- */
+
+/**
+ * Persist a user-dragged order. Receives the full array of title IDs in the
+ * new order and sets position = index on each. The "move to top" action still
+ * works independently — it uses min−1, not a full renumber.
+ */
+export async function reorderList(orderedIds: string[]) {
+  await requireUser();
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      db.update(listEntries).set({ position: i }).where(eq(listEntries.titleId, id)),
+    ),
+  );
+  revalidateLists();
+}
+
+/* ---- favourite directors ------------------------------------------------- */
+
+export async function addFavouriteDirector(tmdbPersonId: number, name: string) {
+  await requireUser();
+  await db
+    .insert(favouriteDirectors)
+    .values({ tmdbPersonId, name })
+    .onConflictDoNothing({ target: favouriteDirectors.tmdbPersonId });
+  revalidatePath("/");
+}
+
+export async function removeFavouriteDirector(tmdbPersonId: number) {
+  await requireUser();
+  await db
+    .delete(favouriteDirectors)
+    .where(eq(favouriteDirectors.tmdbPersonId, tmdbPersonId));
+  revalidatePath("/");
+}
+
+/* ---- chat ---------------------------------------------------------------- */
+
+export async function sendMessage(content: string) {
+  const user = await requireUser();
+  const trimmed = content.trim().slice(0, 2000);
+  if (!trimmed) return;
+  await db.insert(messages).values({ userId: user.id, content: trimmed });
+  revalidatePath("/chat");
 }
 
 /* ---- recommendations ----------------------------------------------------- */

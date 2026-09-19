@@ -64,6 +64,8 @@ export type TitleDetail = TitleSummary & {
   seasons: { season_number: number; episode_count: number; name: string }[];
   /** Film only. */
   runtime: number | null;
+  /** Film only — crew members credited as "Director". */
+  directors: { id: number; name: string }[];
 };
 
 export type TmdbEpisode = {
@@ -170,19 +172,26 @@ type RawDetail = RawTmdbResult & {
   number_of_episodes?: number;
   seasons?: { season_number: number; episode_count: number; name: string }[];
   runtime?: number | null;
+  credits?: { crew: { id: number; name: string; job: string }[] };
 };
 
 export async function getTitle(tmdbId: number, type: MediaType): Promise<TitleDetail> {
   /*
-   * append_to_response folds external_ids into the same request. A film
-   * already carries imdb_id at the top level; a series only exposes it under
-   * external_ids, so asking for both costs one call either way instead of
-   * branching into a second round trip for TV.
+   * append_to_response folds external_ids (and credits for films) into the
+   * same request. A film already carries imdb_id at the top level; a series
+   * only exposes it under external_ids, so asking for both costs one call.
+   * Film credits provide the director list used for the favourite-directors
+   * feature; TV shows don't have a meaningful single director so we skip it.
    */
+  const append = type === "film" ? "external_ids,credits" : "external_ids";
   const raw = await tmdb<RawDetail>(
-    `/${SEGMENT[type]}/${tmdbId}?append_to_response=external_ids`,
+    `/${SEGMENT[type]}/${tmdbId}?append_to_response=${append}`,
     REVALIDATE.detail,
   );
+  const directors =
+    type === "film"
+      ? (raw.credits?.crew ?? []).filter((c) => c.job === "Director").map((c) => ({ id: c.id, name: c.name }))
+      : [];
   return {
     ...normalise(raw, type),
     imdbId: raw.imdb_id || raw.external_ids?.imdb_id || null,
@@ -193,7 +202,18 @@ export async function getTitle(tmdbId: number, type: MediaType): Promise<TitleDe
     numberOfEpisodes: raw.number_of_episodes ?? null,
     seasons: raw.seasons ?? [],
     runtime: raw.runtime ?? null,
+    directors,
   };
+}
+
+/** Film credits for a person — used by the favourite-directors cron. */
+export async function getPersonFilmCredits(
+  personId: number,
+): Promise<{ id: number; title: string; release_date: string | null; poster_path: string | null }[]> {
+  const data = await tmdb<{
+    crew: { id: number; title: string; release_date: string | null; poster_path: string | null; job: string }[];
+  }>(`/person/${personId}/movie_credits`, REVALIDATE.detail);
+  return data.crew.filter((c) => c.job === "Director");
 }
 
 /** TV only — films have no seasons. */

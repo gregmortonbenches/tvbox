@@ -3,7 +3,9 @@ import { and, asc, desc, eq, inArray, isNull, isNotNull, sql } from "drizzle-orm
 import { db } from "./db";
 import {
   episodes,
+  favouriteDirectors,
   listEntries,
+  messages,
   ratings,
   recommendations,
   titles,
@@ -239,6 +241,30 @@ export async function getTasteProfile() {
     .innerJoin(users, eq(users.id, ratings.userId))
     .where(isNull(ratings.episodeId))
     .orderBy(desc(ratings.stars));
+}
+
+/** TMDB person ids of all favourite directors, for quick lookup. */
+export async function getFavouriteDirectorIds(): Promise<Set<number>> {
+  const rows = await db.select({ id: favouriteDirectors.tmdbPersonId }).from(favouriteDirectors);
+  return new Set(rows.map((r) => r.id));
+}
+
+/** Recent chat messages, oldest-first so they render top-to-bottom. */
+export async function getMessages(limit = 100) {
+  return db
+    .select({
+      id: messages.id,
+      content: messages.content,
+      sentAt: messages.sentAt,
+      userId: messages.userId,
+      displayName: users.displayName,
+      accentColor: users.accentColor,
+    })
+    .from(messages)
+    .innerJoin(users, eq(users.id, messages.userId))
+    .orderBy(desc(messages.sentAt))
+    .limit(limit)
+    .then((rows) => rows.reverse());
 }
 
 /** How many of each media type sit in each status — drives the nav counts. */

@@ -302,6 +302,35 @@ export const ratings = pgTable(
   ],
 );
 
+/*
+ * People whose films we want to track. When a new film by one of these
+ * directors appears on TMDB it gets added to the watchlist automatically.
+ * TV-only directors can be added too — only their film credits are checked.
+ */
+export const favouriteDirectors = pgTable("favourite_directors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tmdbPersonId: integer("tmdb_person_id").notNull().unique(),
+  name: text("name").notNull(),
+  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/*
+ * Simple two-person chat. No threads, no reactions — just messages and who
+ * sent them. Client polls on a short interval while the tab is active.
+ */
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("messages_sent_idx").on(t.sentAt)],
+);
+
 export const recommendationSource = pgEnum("recommendation_source", [
   "claude",
   "tmdb_similar",

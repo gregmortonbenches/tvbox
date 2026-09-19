@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell, EmptyState, PageHeading } from "@/components/AppShell";
 import { MediaFilter, parseMediaFilter } from "@/components/MediaFilter";
 import { PosterCard } from "@/components/PosterCard";
+import { SortableGrid } from "@/components/SortableGrid";
 import { WhoFilter } from "@/components/WhoFilter";
 import { getListCounts, getTitleCards, type TitleCard } from "@/lib/queries";
 import { getAllUsers, getCurrentUser } from "@/lib/session";
@@ -75,7 +76,7 @@ export default async function WatchlistPage({
             .
           </p>
         ) : (
-          <Queue titles={want} people={people} />
+          <SortableGrid titles={want} people={people} />
         )}
       </section>
     </AppShell>

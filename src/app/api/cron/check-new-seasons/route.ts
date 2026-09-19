@@ -1,8 +1,9 @@
-import { and, eq, gt, max } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, max } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { cacheSeasonEpisodes, ensureTitleCached } from "@/lib/cache";
+import { cacheTitleSummary, cacheSeasonEpisodes, ensureTitleCached } from "@/lib/cache";
 import { db } from "@/lib/db";
-import { episodes, listEntries, titles } from "@/lib/db/schema";
+import { episodes, favouriteDirectors, listEntries, titles, users } from "@/lib/db/schema";
+import { getPersonFilmCredits } from "@/lib/tmdb";
 
 /*
  * Called daily by Vercel Cron. For every TV show marked as a favourite,
@@ -80,5 +81,77 @@ export async function GET(req: Request) {
     results.push({ name: fav.name, newSeasons, relisted });
   }
 
-  return NextResponse.json({ checked: favourites.length, updated: results });
+  /* ---- favourite directors: add new films to watchlist ------------------- */
+
+  const directors = await db.select().from(favouriteDirectors);
+  const directorFilms: { directorName: string; films: string[] }[] = [];
+
+  const today = new Date();
+  const windowStart = new Date(today);
+  windowStart.setDate(windowStart.getDate() - 180);
+  const windowEnd = new Date(today);
+  windowEnd.setDate(windowEnd.getDate() + 180);
+
+  for (const director of directors) {
+    const credits = await getPersonFilmCredits(director.tmdbPersonId);
+    const relevant = credits.filter((film) => {
+      if (!film.release_date) return false;
+      const d = new Date(film.release_date);
+      return d >= windowStart && d <= windowEnd;
+    });
+    if (relevant.length === 0) continue;
+
+    // Which of these are already on the list in any form?
+    const tmdbIds = relevant.map((f) => f.id);
+    const existing = await db
+      .select({ tmdbId: titles.tmdbId })
+      .from(listEntries)
+      .innerJoin(titles, eq(titles.id, listEntries.titleId))
+      .where(and(inArray(titles.tmdbId, tmdbIds), eq(titles.mediaType, "film")));
+    const existingIds = new Set(existing.map((r) => r.tmdbId));
+
+    const added: string[] = [];
+    for (const film of relevant) {
+      if (existingIds.has(film.id)) continue;
+
+      // Cache the title row so we have an internal id to reference.
+      const titleId = await cacheTitleSummary({
+        tmdbId: film.id,
+        mediaType: "film",
+        name: film.title,
+        overview: "",
+        posterPath: film.poster_path,
+        backdropPath: null,
+        releaseDate: film.release_date,
+      });
+
+      const [{ userId }] = await db
+        .select({ userId: users.id })
+        .from(users)
+        .orderBy(asc(users.createdAt))
+        .limit(1);
+
+      const [{ nextPos }] = await db.select({ nextPos: max(listEntries.position) }).from(listEntries);
+      await db
+        .insert(listEntries)
+        .values({
+          titleId,
+          status: "want",
+          addedByUserId: userId,
+          position: (nextPos ?? 0) + 1,
+          note: `New film by ${director.name}`,
+        })
+        .onConflictDoNothing({ target: listEntries.titleId });
+
+      added.push(film.title);
+    }
+    if (added.length > 0) directorFilms.push({ directorName: director.name, films: added });
+  }
+
+  return NextResponse.json({
+    checked: favourites.length,
+    updatedShows: results,
+    checkedDirectors: directors.length,
+    addedDirectorFilms: directorFilms,
+  });
 }
