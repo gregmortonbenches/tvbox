@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/*
+ * Palette: six traditional Japanese colours, supplied as the project's
+ * colour guideline. Names kept in romaji so they're greppable against the
+ * original reference card:
+ *
+ *   tobi        鳶色    (とびいろ)    Hay's Russet
+ *   kobicha     媚茶色  (こびちゃいろ) Pale Raw Umber
+ *   koji        柑子色  (こうじいろ)   Yellow Orange
+ *   benifuji    紅藤    (べにふじ)    Laelia Pink
+ *   suzume      雀茶    (すずめちゃ)   Etruscan Red
+ *   kamenozoki  瓶覗    (かめのぞき)   Pale King's Blue
+ *
+ * Use the SEMANTIC tokens below in components, not the raw palette names —
+ * that way a palette tweak is a one-line change here rather than a sweep
+ * through every file. Raw names are exposed for the rare one-off.
+ */
+@theme {
+  --color-tobi: #95483f;
+  --color-kobicha: #6c541e;
+  --color-koji: #f6ad49;
+  --color-benifuji: #cca6bf;
+  --color-suzume: #aa4a34;
+  --color-kamenozoki: #a2bfe0;
+
+  /* Surfaces — warm near-blacks pulled down from kobicha rather than
+     neutral greys, so the dark UI sits in the same family as the palette. */
+  --color-canvas: #14110c;
+  --color-surface: #1e1912;
+  --color-raised: #2a231a;
+  --color-line: #3b3125;
+
+  /* Text */
+  --color-ink: #f4ece0;
+  --color-ink-muted: #a89880;
+  --color-ink-faint: #7a6c58;
+
+  /* Semantic roles */
+  --color-accent: var(--color-koji);          /* ratings, primary action */
+  --color-accent-strong: var(--color-suzume); /* hover / pressed */
+  --color-link: var(--color-kamenozoki);      /* links, info */
+  --color-tag: var(--color-benifuji);         /* genre chips, metadata */
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/*
+ * Dark-first and, for now, dark-only — the reference palette is a set of
+ * muted earth tones that read well on a near-black canvas and turn muddy on
+ * white. A light theme would need its own (lighter, less saturated) ramp
+ * rather than a straight inversion, so it's deliberately not stubbed here.
+ */
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-koji);
+  color: var(--color-canvas);
+}
