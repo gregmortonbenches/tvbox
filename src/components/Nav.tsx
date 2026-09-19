@@ -6,8 +6,8 @@ import { WalrusArt } from "./WalrusArt";
 
 const LINKS = [
   { href: "/", label: "Watchlist" },
-  { href: "/archive", label: "Archive" },
-  { href: "/recommendations", label: "For you" },
+  { href: "/archive", label: "Watched" },
+  { href: "/recommendations", label: "Recommendations" },
 ];
 
 export function Nav({ user }: { user: CurrentUser | null }) {
