@@ -1,0 +1,53 @@
+# Hannah's Letterboxd watched list, compiled from grid screenshots, Sept 2026.
+#
+# CAVEATS FROM THE SOURCE:
+#   - Transcribed from ~5 screenshots (~179 films, likely a partial view).
+#   - (★★★★★) = rating visible on the tile. No marker = no rating visible.
+#   - No heart icons (♥) were visible on any tile in these screenshots.
+#   - Decade headings assigned by Greg from release year — spot-check any that
+#     look off, the categorisation is mine not Letterboxd's.
+#   - Titles with commas have had commas removed — the parser cannot distinguish
+#     a title comma from an entry separator, but normalisation still finds the
+#     match (e.g. "Sorry Baby" resolves to "Sorry, Baby").
+#   - Two unclear titles skipped: "The Street" and "Nest" (both marked
+#     "[title unclear]" in the source).
+#   - Twin Peaks and Twin Peaks: The Return are TV series — they will be
+#     reported in the review file, not imported as films.
+#   - Materialists: heart status unclear (tile was hovered showing UI buttons);
+#     imported with rating only, no like recorded.
+#   - "The VVitch" written as "The Witch (2015)" to match TMDB's spelling.
+#   - "Blue Is the Warmest Colour" written as "Blue Is the Warmest Color" to
+#     match TMDB's American spelling.
+#   - "Ringu" written as "Ring (1998)" to match TMDB's indexed title.
+#   - "Kill Bill" split into Vol. 1 (rated) and Vol. 2 (no separate rating).
+#   - "Crip Camp" written as its full TMDB title to resolve the subtitle match.
+#   - "Tout le monde aime Jeanne" written as its TMDB English title.
+#   - "School of Rock (2003)" has year to avoid TMDB returning the 2016 TV series.
+#   - "The New Years" goes to review — TMDB indexes it as a TV series; check
+#     the review file and add manually if it should be a film entry.
+#   - "Le Bonheur" (1965, Agnès Varda): TMDB's year metadata is unclear for
+#     this entry — it will likely go to review. Check candidates in the review file.
+
+## 1950s
+Good Morning (1959) (★★★★★)
+
+## 1960s
+The Apartment (1960) (★★½), Le Bonheur (★★★★★)
+
+## 1970s
+The Texas Chain Saw Massacre (★), Nuts in May (★★★★), House (1977) (★★★★★), Grease (1978) (★★★★★)
+
+## 1980s
+The Shining (1980) (★★), Three Men and a Baby (★★★★), Fatal Attraction (1987) (★★★★), Full Metal Jacket (★★★★), My Neighbor Totoro (★★★★★)
+
+## 1990s
+Life Is Sweet (1991) (★★★★★), Twin Peaks (★★★★★), Orlando (1992) (★★), Twin Peaks: Fire Walk with Me (★★★), Life and Nothing More (1992), Four Weddings and a Funeral (1994), Before Sunrise (1995) (★★★), The Lion King (1994) (★★★★), Pulp Fiction (★★★), Crash (1996) (★★★), Bound (1996) (★★★★), Copycat (1995) (★★★), Ring (1998) (★★★½), Rushmore (1998) (★★★), American Pie (1999) (★★★★★), American Beauty (1999) (★★★), Fight Club (1999) (★★), Toy Story 2 (★★★★)
+
+## 2000s
+Battle Royale (★★★★), Requiem for a Dream (★★★★), American Psycho (2000) (★★), Kevin & Perry Go Large (★★★★★), A Knight's Tale (★★), Spirited Away (★★★★), Lilo & Stitch (2002) (★★★★), Punch-Drunk Love (2002), Bend It Like Beckham (★★★), Swimming Pool (2003) (★★★★½), Kill Bill: Vol. 1 (2003) (★★★★½), Kill Bill: Vol. 2 (2004), School of Rock, Love Actually (★★★★★), Wasp (2003) (★★★★), My Summer of Love (★½), Before Sunset (2004) (★★½), Walk the Line (2005) (★★★★), Me and You and Everyone We Know (★★★), Marie Antoinette (2006), Pan's Labyrinth, Borat (★★★★★), Zodiac (2007) (★★★), Into the Wild (2007) (★★★★), Revanche (2008) (★★★), Step Brothers (★★★★★), Two Lovers (2008) (★★★½), The Beaches of Agnès, District 9 (★★★½), (500) Days of Summer (★★★★★), Antichrist (2009) (★½), Dogtooth (2009) (★★★)
+
+## 2010s
+We Need to Talk About Kevin (★★), Melancholia (2011) (★), Frances Ha (★★★★★), Stories We Tell (★★★★★), Her (★★★), Blue Is the Warmest Color (2013) (★★★★★), The Grand Budapest Hotel (★★★★★), It Follows (2015) (★★★), What We Did on Our Holiday (2014) (★★★★★), Gone Girl (2014) (★★★★), Tangerine (2015) (★★★), The Lure (2015) (★★★½), Mustang (2015) (★★★★), The Witch (2016) (★), The Handmaiden (★★★★★), My Life as a Zucchini (★★★★★), Paterson (★★★), La La Land (2016) (★), Hacksaw Ridge (★★★★), Werewolf (2019) (★★), Get Out (2017) (★★★★), Baby Driver (★★★★), Twin Peaks: The Return (★★★★★), The Killing of a Sacred Deer (★★), Dunkirk (2017) (★★), Lady Bird (★★★★★), Unsane (★★★), BlacKkKlansman (★★★★), Booksmart (★), Yesterday (2019) (★★), The Lighthouse (2019) (★★★), Parasite (2019) (★★★★½), Midsommar (★★★★½), Days of the Bagnold Summer (★★★½), Joker (2019) (★★★), Babyteeth (2020) (★★★★), Rocks (2020) (★★★★★), Jojo Rabbit (★★★★★), Little Women (2019) (★★)
+
+## 2020s
+Nomadland (2021) (★★★★), Shiva Baby (2021) (★★★★★), Emma. (2020) (★★★★), Palm Springs (2020) (★★), Promising Young Woman (★★★★), Crip Camp: A Disability Revolution (2020) (★★★★★), Enola Holmes (★★★★), Good Thanks You? (★★★★★), Pleasure (2021) (★★★★), The Velvet Underground (★★★★), The Worst Person in the World (★★★★), Titane (★★★★★), People Just Do Nothing: Big in Japan (★★★★★), Freakscene: The Story of Dinosaur Jr. (★★★★), The Electrical Life of Louis Wain (★★★), The Lost Daughter (2021) (★★★★), Dune (2021) (★★★★), Last Night in Soho (★★★★), Licorice Pizza (★★★★), Happening (2021) (★★★★), Don't Look Up (2021) (★), Don't Worry Darling (½), Pearl (2022) (★), Medusa Deluxe (★★★★), Elvis (2022) (★★★), Everybody Loves Jeanne (2022) (★★★★★), Aftersun (2022) (★★★), X (2022) (★★★), Babysitter (2022) (★★★½), The Menu (2022) (★★½), Saint Omer (★★½), Rye Lane (★★★★), Our Body (2023) (★★★★★), Bottoms (2023) (★★★★), Strange Way of Life (★★★), How to Have Sex (★★★), The Zone of Interest (★★★★½), Killers of the Flower Moon (★★★), Asteroid City (★★), Perfect Days (2023) (★★★½), Barbie (2023) (★★★★★), Oppenheimer (2023) (★★), Saltburn (★★★½), Poor Things (2023) (★★★★★), All of Us Strangers (★★★★), High & Low – John Galliano (★★★), Priscilla (★★★★), Chicken Run: Dawn of the Nugget (★★★★★), Dìdi (2024) (★★★★★), A Real Pain (★★), Crossing (2024), The Substance (★★★), Anora (★★★★), All We Imagine as Light (★★★½), Witches (2024) (★★★★★), Toxic (2024) (★★★★★), Better Man (2024) (★★★★), Vermiglio, We Live in Time (★★★★), Hard Truths (2024) (★★★★½), Friendship (2025) (★★★★★), Wicked (2024) (★★), Nosferatu (2024) (★★½), The New Years (★★★★★), A Complete Unknown (★★★½), Sorry Baby (2025) (★★★★★), Bridget Jones: Mad About the Boy (★★★), Sinners (2025) (★★★★★), Die My Love (★★★★★), Materialists (★★★★), 28 Years Later (2025) (★★★), KPop Demon Hunters (★★★★), One Battle After Another (★★★★), The Invite (2026) (★★★½), Wuthering Heights (2026) (★★★★★), The Sheep Detectives (★★★★), The Odyssey (2026) (★★★½)

@@ -30,14 +30,14 @@ import { eq, isNull } from "drizzle-orm";
 import { parseFilmList, type ParsedFilm } from "./parseFilmList.mts";
 import { listEntries, ratings, titles, users, watches } from "../src/lib/db/schema.ts";
 
-const SOURCE = "data/letterboxd-films.txt";
-const REVIEW_OUT = "data/films-needs-review.json";
 const TMDB = "https://api.themoviedb.org/3";
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const USERNAME = valueOf("--user") ?? "greg";
 const LIMIT = Number(valueOf("--limit") ?? "0") || Infinity;
+const SOURCE = valueOf("--source") ?? "data/letterboxd-films.txt";
+const REVIEW_OUT = valueOf("--review-out") ?? "data/films-needs-review.json";
 
 function valueOf(flag: string): string | undefined {
   const i = args.indexOf(flag);

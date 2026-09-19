@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-09-19T14:36:46.299Z",
+  "note": "Entries NOT imported. Add a disambiguating year to the source file, e.g. 'Crash (1996)', then re-run.",
+  "ambiguous": [
+    {
+      "title": "The Apartment",
+      "section": "1960s",
+      "candidates": [
+        "The Apartment (1960) [tmdb:284]",
+        "The Apartment (1960) [tmdb:364520]"
+      ]
+    },
+    {
+      "title": "Le Bonheur",
+      "section": "1960s",
+      "candidates": [
+        "Le Bonheur (1934) [tmdb:263768]",
+        "Le Bonheur (2012) [tmdb:679630]",
+        "Le bonheur (?) [tmdb:1429057]",
+        "Le bonheur (2013) [tmdb:614588]",
+        "Le Bonheur (2024) [tmdb:1726395]"
+      ]
+    },
+    {
+      "title": "Twin Peaks",
+      "section": "1990s",
+      "candidates": [
+        "Twin Peaks (1989) [tmdb:452522]",
+        "Twin Peaks (1977) [tmdb:838555]"
+      ]
+    },
+    {
+      "title": "Aftersun",
+      "section": "2020s",
+      "candidates": [
+        "Aftersun (2022) [tmdb:965150]",
+        "Aftersun (2022) [tmdb:969829]"
+      ]
+    },
+    {
+      "title": "Friendship",
+      "section": "2020s",
+      "candidates": [
+        "Friendship (2025) [tmdb:1239655]",
+        "Friendship (2025) [tmdb:1614083]"
+      ]
+    },
+    {
+      "title": "The Odyssey",
+      "section": "2020s",
+      "candidates": [
+        "The Odyssey (2026) [tmdb:1368337]",
+        "The Odyssey (2026) [tmdb:1698863]",
+        "The Odyssey (2026) [tmdb:1756234]"
+      ]
+    }
+  ],
+  "looksLikeSeries": [
+    {
+      "title": "School of Rock",
+      "matchedSeries": "School of Rock (2016)"
+    },
+    {
+      "title": "The New Years",
+      "matchedSeries": "The New Years (2024)"
+    }
+  ],
+  "unresolved": [
+    {
+      "title": "Borat",
+      "section": "2000s",
+      "nearest": [
+        "Borat: Cultural Learnings of America for Make Benefit Glorious Nation of Kazakhstan (2006) [tmdb:496]",
+        "Borat Subsequent Moviefilm: Delivery of Prodigious Bribe to American Regime for Make Benefit Once Glorious Nation of Kazakhstan (2020) [tmdb:740985]",
+        "When Borat Came to Town (2008) [tmdb:101585]",
+        "The Best of Borat (2001) [tmdb:372623]",
+        "Borat: VHS Cassette of Material Deemed \"Sub-Acceptable\" by Kazakhstan Ministry of Censorship and Circumcision (2021) [tmdb:818789]"
+      ]
+    },
+    {
+      "title": "Twin Peaks: The Return",
+      "section": "2010s",
+      "nearest": [
+        "Bad Binoculars (2017) [tmdb:498842]",
+        "Tell It Martin (2017) [tmdb:499777]",
+        "The Number of Completion (2017) [tmdb:499778]",
+        "I Had Bad Milk in Dehradun (2017) [tmdb:499776]",
+        "A Bloody Finger in Your Mouth (2017) [tmdb:497603]"
+      ]
+    }
+  ]
+}
