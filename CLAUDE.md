@@ -61,6 +61,37 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   `watches_one_per_user_per_film` partial unique index. Marking a film seen also
   moves it to "watched" — unlike a series there's no in-between state.
 
+- **Priority is a plain integer with gaps, and `wantedByUserId` NULL means
+  both.** At this scale a swap is two UPDATEs and "move to top" is one
+  (`min - 1`), so there's no fractional-rank scheme to rebalance and no float
+  drift; positions may go negative, only the relative order means anything.
+  Null-means-both is the default because a shared list with occasional solo
+  entries is the real shape — an enum of names would break if the seeded
+  names changed, and a membership table would make the common case need the
+  most rows.
+
+- **The watchlist sort needs THREE keys, and both places must match.**
+  `position` and `addedAt` can both tie — every row starts at position 0, and
+  rows written by one INSERT share a transaction timestamp — and Postgres
+  returns tied rows in arbitrary order, so the grid reshuffles between
+  identical page loads. `titleId` is the stable final key. `getTitleCards`
+  and `ensureDistinctPositions` must order identically: renumbering by a
+  different order than the one on screen silently moves cards the user never
+  touched. This was a real bug, caught by clicking the buttons rather than
+  reasoning about them.
+
+- **Reorder actions take the NEIGHBOUR's id from the client.** Under a media
+  or person filter, the card above isn't necessarily the row above in the
+  database. The page computes neighbours from what it actually rendered; the
+  server just swaps the two it's given. Don't "simplify" this into the server
+  working out what's above.
+
+- **Reordering is buttons, not drag-and-drop.** Native HTML5 drag doesn't
+  work on touch at all, and this gets used on phones. "Move to top" carries
+  the weight drag would — the common move is "let's watch this next", not
+  nudging something three places. A touch-capable drag library would be a fine
+  addition, not a correction.
+
 - **The watchlist is shared; ticks and ratings are per-person.** `list_entries`
   is keyed by show alone (one list, not one each). `watches` and `ratings` carry
   a `user_id`, because the ask was explicitly "we can each rate a show" and

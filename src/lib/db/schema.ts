@@ -174,11 +174,44 @@ export const listEntries = pgTable(
     addedByUserId: uuid("added_by_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+
+    /*
+     * Manual priority. Lower sorts first; new entries land at the END, so
+     * adding something never silently jumps the queue ahead of things you
+     * already decided you wanted more.
+     *
+     * Plain integers with gaps, not fractional ranks: at this scale a swap
+     * is two UPDATEs and "move to top" is one (min - 1), which needs no
+     * rebalancing and no float drift. Values may go negative — that's fine,
+     * only the relative order is meaningful.
+     */
+    position: integer("position").notNull().default(0),
+
+    /*
+     * Whose watchlist this is on.
+     *
+     * NULL means BOTH of you, and null is the default because that's the
+     * common case — a shared list with occasional solo entries, not two
+     * separate lists. Storing it as a nullable user reference rather than an
+     * enum keeps it honest if the seeded names ever change, and means "just
+     * Greg" is one row rather than a membership table where the default case
+     * needs the most rows.
+     */
+    wantedByUserId: uuid("wanted_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+
+    /** Free-text "why it's on the list" — e.g. "Dave keeps going on about it". */
     note: text("note"),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },
-  (t) => [index("list_entries_status_idx").on(t.status)],
+  (t) => [
+    index("list_entries_status_idx").on(t.status),
+    /* Drives the watchlist's default sort. */
+    index("list_entries_position_idx").on(t.status, t.position),
+    index("list_entries_wanted_by_idx").on(t.wantedByUserId),
+  ],
 );
 
 /*

@@ -11,7 +11,14 @@ and no public profiles. Two people, one shared list.
 
 - **Watchlist** — a single shared list of what you want to watch, split into
   things you've started ("Carrying on") and things you haven't. Filter by
-  All / TV / Films.
+  All / TV / Films, or by whose list it's on.
+- **Priority order** — put the queue in the order you actually want to watch
+  things. Arrows to nudge, and a "watch this next" button to jump to the top.
+  New additions land at the end, so nothing silently jumps the queue.
+- **A note per entry** — why it's on the list. "Recommended by Dave", "for a
+  rainy Sunday", whatever you'll need to remember in four months.
+- **Whose list it's on** — by default both of you want it. Mark something as
+  just Greg's or just Hannah's and it's flagged on the card and filterable.
 - **Episode ticking** — open a series, tick episodes as you watch them. Both
   people's progress shows on every row, so you can see who's ahead. Films get a
   single "seen it" toggle instead, since there's nothing to be partway through.

@@ -15,6 +15,13 @@
       "when": 1789822288800,
       "tag": "0001_workable_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789824235963,
+      "tag": "0002_curved_sentinel",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, isNull, isNotNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, isNotNull, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   episodes,
@@ -35,6 +35,14 @@ export type TitleCard = {
   rtCritic: number | null;
   imdbRating: number | null;
   metascore: number | null;
+  /** Manual priority. Lower sorts first. */
+  position: number;
+  /** Null means both of you want it; a user id means only that person does. */
+  wantedByUserId: string | null;
+  /** Why it's on the list. */
+  note: string | null;
+  /** Who added it — pairs with the note for "Hannah added this because…". */
+  addedByUserId: string;
 };
 
 /** The route a title lives at. TV and film ids come from separate sequences. */
@@ -49,6 +57,13 @@ export function titleHref(mediaType: MediaType, tmdbId: number): string {
  * with a fallback to however many episodes we've actually cached — a series
  * added but never opened has none cached yet, and 0/0 reads better than
  * dividing by null. Films report 0 and render a seen/not-seen mark instead.
+ */
+/*
+ * The third key makes the sort TOTAL. Position and addedAt can both tie —
+ * rows written by one INSERT share a transaction timestamp, and everything
+ * starts at position 0 — and Postgres is free to return tied rows in any
+ * order, so without a stable final key the grid can reshuffle between two
+ * identical page loads. titleId is a uuid and never ties.
  */
 export async function getTitleCards(
   statuses: ListStatus[],
@@ -75,11 +90,15 @@ export async function getTitleCards(
       status: listEntries.status,
       addedAt: listEntries.addedAt,
       finishedAt: listEntries.finishedAt,
+      position: listEntries.position,
+      wantedByUserId: listEntries.wantedByUserId,
+      note: listEntries.note,
+      addedByUserId: listEntries.addedByUserId,
     })
     .from(listEntries)
     .innerJoin(titles, eq(titles.id, listEntries.titleId))
     .where(where)
-    .orderBy(desc(listEntries.addedAt));
+    .orderBy(asc(listEntries.position), desc(listEntries.addedAt), asc(listEntries.titleId));
 
   if (entries.length === 0) return [];
   const ids = entries.map((e) => e.id);
@@ -133,6 +152,10 @@ export async function getTitleCards(
       rtCritic: e.rtCritic,
       imdbRating: e.imdbRating,
       metascore: e.metascore,
+      position: e.position,
+      wantedByUserId: e.wantedByUserId,
+      note: e.note,
+      addedByUserId: e.addedByUserId,
     };
   });
 }

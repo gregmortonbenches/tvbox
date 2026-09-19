@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -68,11 +68,20 @@ export async function addToWatchlist(tmdbId: number, mediaType: MediaType) {
   // is what turns a (tmdbId, mediaType) pair into our internal id.
   const { titleId } = await ensureTitleCached(tmdbId, mediaType);
 
+  /*
+   * Land at the END of the queue. Adding something shouldn't silently jump
+   * ahead of things you already decided you wanted more — you promote it
+   * deliberately if you want it next.
+   */
+  const [{ nextPosition }] = await db
+    .select({ nextPosition: sql<number>`coalesce(max(${listEntries.position}), 0) + 1` })
+    .from(listEntries);
+
   await db
     .insert(listEntries)
-    .values({ titleId, status: "want", addedByUserId: user.id })
-    // Already listed: adding again shouldn't reset status or reassign who
-    // added it, so this is a genuine no-op.
+    .values({ titleId, status: "want", addedByUserId: user.id, position: nextPosition })
+    // Already listed: adding again shouldn't reset status, reassign who
+    // added it, or move its place in the queue — a genuine no-op.
     .onConflictDoNothing({ target: listEntries.titleId });
 
   revalidateLists(mediaType, tmdbId);
@@ -258,6 +267,134 @@ export async function clearRating(
         isNull(ratings.episodeId),
       ),
     );
+  revalidateLists(mediaType, tmdbId);
+}
+
+
+/* ---- priority ------------------------------------------------------------ */
+
+/*
+ * Every row starts at position 0 (the column's default when the migration
+ * added it), so before any reorder can mean anything the group has to have
+ * distinct values. This renumbers 0,1,2… by the order currently on screen,
+ * and is a no-op once they're already distinct — so it self-heals on first
+ * use rather than needing a data migration.
+ */
+async function ensureDistinctPositions(status: ListStatus) {
+  const rows = await db
+    .select({ titleId: listEntries.titleId, position: listEntries.position })
+    .from(listEntries)
+    .where(eq(listEntries.status, status))
+    // Must match getTitleCards' ordering EXACTLY, including the tiebreak —
+    // renumbering by a different order than the one on screen silently
+    // reshuffles cards the user never touched.
+    .orderBy(asc(listEntries.position), desc(listEntries.addedAt), asc(listEntries.titleId));
+
+  const distinct = new Set(rows.map((r) => r.position));
+  if (distinct.size === rows.length) return rows;
+
+  await Promise.all(
+    rows.map((r, i) =>
+      db.update(listEntries).set({ position: i }).where(eq(listEntries.titleId, r.titleId)),
+    ),
+  );
+  return rows.map((r, i) => ({ ...r, position: i }));
+}
+
+/**
+ * Swap two entries' places.
+ *
+ * The CALLER passes the neighbour, rather than the server working out what's
+ * "above" — the client knows what's actually on screen, and under a TV/film
+ * filter the row above may not be the row above in the database. Doing it
+ * this way keeps the buttons honest under any filter.
+ */
+export async function swapPriority(titleIdA: string, titleIdB: string) {
+  await requireUser();
+
+  const rows = await db
+    .select({
+      titleId: listEntries.titleId,
+      position: listEntries.position,
+      status: listEntries.status,
+    })
+    .from(listEntries)
+    .where(inArray(listEntries.titleId, [titleIdA, titleIdB]));
+
+  if (rows.length !== 2) return;
+  // Reordering across sections would be meaningless — "above" only has a
+  // meaning within one list.
+  if (rows[0].status !== rows[1].status) return;
+
+  const fixed = await ensureDistinctPositions(rows[0].status);
+  const a = fixed.find((r) => r.titleId === titleIdA);
+  const b = fixed.find((r) => r.titleId === titleIdB);
+  if (!a || !b) return;
+
+  await Promise.all([
+    db.update(listEntries).set({ position: b.position }).where(eq(listEntries.titleId, a.titleId)),
+    db.update(listEntries).set({ position: a.position }).where(eq(listEntries.titleId, b.titleId)),
+  ]);
+
+  revalidateLists();
+}
+
+/** Straight to the front of the queue — one update, no renumbering needed. */
+export async function moveToTop(titleId: string) {
+  await requireUser();
+
+  const [entry] = await db
+    .select({ status: listEntries.status })
+    .from(listEntries)
+    .where(eq(listEntries.titleId, titleId))
+    .limit(1);
+  if (!entry) return;
+
+  const fixed = await ensureDistinctPositions(entry.status);
+  const min = Math.min(...fixed.map((r) => r.position));
+
+  // Positions may go negative. Only the relative order matters, so there is
+  // no need to renumber the rest.
+  await db
+    .update(listEntries)
+    .set({ position: min - 1 })
+    .where(eq(listEntries.titleId, titleId));
+
+  revalidateLists();
+}
+
+/* ---- whose list is it ---------------------------------------------------- */
+
+/** `userId` null means both of you want it — the default and common case. */
+export async function setWantedBy(
+  titleId: string,
+  userId: string | null,
+  mediaType?: MediaType,
+  tmdbId?: number,
+) {
+  await requireUser();
+  await db
+    .update(listEntries)
+    .set({ wantedByUserId: userId })
+    .where(eq(listEntries.titleId, titleId));
+  revalidateLists(mediaType, tmdbId);
+}
+
+/* ---- the note ------------------------------------------------------------ */
+
+/** Why it's on the list — "Dave keeps going on about it". Empty clears it. */
+export async function setNote(
+  titleId: string,
+  note: string,
+  mediaType?: MediaType,
+  tmdbId?: number,
+) {
+  await requireUser();
+  const trimmed = note.trim();
+  await db
+    .update(listEntries)
+    .set({ note: trimmed.length > 0 ? trimmed.slice(0, 500) : null })
+    .where(eq(listEntries.titleId, titleId));
   revalidateLists(mediaType, tmdbId);
 }
 

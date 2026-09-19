@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { FilmWatchToggle } from "@/components/FilmWatchToggle";
+import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
 import { Walrus } from "@/components/Walrus";
 import { ensureTitleCached } from "@/lib/cache";
@@ -71,6 +72,8 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           seen={watchers.has(user.id)}
         />
       </TitleHero>
+
+      <ListEntryPanel entry={entry} mediaType="film" tmdbId={tmdbId} people={people} />
 
       {other && (
         <p className="mt-8 text-sm text-ink-faint">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { posterUrl } from "@/lib/tmdb";
 import type { CurrentUser } from "@/lib/session";
 import { titleHref, type TitleCard } from "@/lib/queries";
+import { PriorityControls } from "./PriorityControls";
 import { Scores } from "./Scores";
 import { StarRating } from "./StarRating";
 
@@ -18,15 +19,26 @@ export function PosterCard({
   title,
   people,
   showProgress = true,
+  rank,
+  prevId = null,
+  nextId = null,
 }: {
   title: TitleCard;
   people: CurrentUser[];
   showProgress?: boolean;
+  /** 1-based place in the queue. Omit to hide the badge and the arrows. */
+  rank?: number;
+  prevId?: string | null;
+  nextId?: string | null;
 }) {
   const poster = posterUrl(title.posterPath);
   const year = title.releaseDate?.slice(0, 4);
   const href = titleHref(title.mediaType, title.tmdbId);
   const isFilm = title.mediaType === "film";
+  /** Null wantedByUserId means both of you, so there's nothing to flag. */
+  const soloWanter = title.wantedByUserId
+    ? people.find((p) => p.id === title.wantedByUserId)
+    : null;
 
   return (
     <div className="group">
@@ -53,6 +65,14 @@ export function PosterCard({
               Film
             </span>
           )}
+          {rank !== undefined && (
+            <span
+              className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded bg-canvas/85 font-mono text-[11px] tabular-nums text-accent backdrop-blur-sm"
+              title={`Number ${rank} in the queue`}
+            >
+              {rank}
+            </span>
+          )}
         </div>
       </Link>
 
@@ -63,6 +83,23 @@ export function PosterCard({
           </p>
           {year && <p className="text-xs text-ink-faint">{year}</p>}
         </Link>
+
+        {soloWanter && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px]"
+            style={{ borderColor: soloWanter.accentColor, color: soloWanter.accentColor }}
+            title={`Only ${soloWanter.displayName} wants to watch this`}
+          >
+            <span aria-hidden className="size-1.5 rounded-full" style={{ background: soloWanter.accentColor }} />
+            {soloWanter.displayName} only
+          </span>
+        )}
+
+        {title.note && (
+          <p className="line-clamp-2 text-xs italic leading-snug text-ink-muted" title={title.note}>
+            {title.note}
+          </p>
+        )}
 
         <Scores
           rtCritic={title.rtCritic}
@@ -152,6 +189,12 @@ export function PosterCard({
             );
           })}
         </div>
+
+        {rank !== undefined && (
+          <div className="pt-0.5">
+            <PriorityControls titleId={title.id} prevId={prevId} nextId={nextId} />
+          </div>
+        )}
       </div>
     </div>
   );

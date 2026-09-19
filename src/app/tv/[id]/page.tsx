@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { AppShell } from "@/components/AppShell";
 import { EpisodeList } from "@/components/EpisodeList";
+import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
 import { Walrus } from "@/components/Walrus";
 import { cacheSeasonEpisodes, ensureTitleCached } from "@/lib/cache";
@@ -91,6 +92,8 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
         currentUserId={user.id}
         ratings={ratings}
       />
+
+      <ListEntryPanel entry={entry} mediaType="tv" tmdbId={tmdbId} people={people} />
 
       <section className="mt-12">
         <h2 className="mb-4 border-b border-line pb-2 text-sm font-semibold uppercase tracking-wider text-ink-muted">
