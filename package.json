@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",
+    "@neon/config": "^1.7.2",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.5",
     "postgres": "^3.4.9",
