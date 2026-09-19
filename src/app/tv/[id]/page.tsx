@@ -4,7 +4,6 @@ import { AppShell } from "@/components/AppShell";
 import { EpisodeList } from "@/components/EpisodeList";
 import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
-import { Walrus } from "@/components/Walrus";
 import { cacheSeasonEpisodes, ensureTitleCached } from "@/lib/cache";
 import { db } from "@/lib/db";
 import { episodes as episodesTable } from "@/lib/db/schema";
@@ -64,15 +63,6 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
 
   return (
     <AppShell user={user}>
-      <Walrus
-        context={{
-          page: "show",
-          name: detail.name,
-          yourProgress: countFor(user.id),
-          theirProgress: other ? countFor(other.id) : 0,
-          theirName: other?.displayName ?? "they",
-        }}
-      />
 
       <TitleHero
         titleId={titleId}

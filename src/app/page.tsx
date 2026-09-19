@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AppShell, EmptyState, PageHeading } from "@/components/AppShell";
 import { MediaFilter, parseMediaFilter } from "@/components/MediaFilter";
 import { PosterCard } from "@/components/PosterCard";
-import { Walrus } from "@/components/Walrus";
 import { WhoFilter } from "@/components/WhoFilter";
 import { getListCounts, getTitleCards, type TitleCard } from "@/lib/queries";
 import { getAllUsers, getCurrentUser } from "@/lib/session";
@@ -43,8 +42,6 @@ export default async function WatchlistPage({
 
   return (
     <AppShell user={user}>
-      <Walrus context={{ page: "watchlist", want: want.length, watching: watching.length }} />
-
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <MediaFilter basePath="/" current={current} counts={tally} />
         <WhoFilter

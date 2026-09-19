@@ -4,7 +4,6 @@ import { AppShell, PageHeading } from "@/components/AppShell";
 import { AddButton } from "@/components/AddButton";
 import { DismissButton } from "@/components/DismissButton";
 import { RefreshRecommendations } from "@/components/RefreshRecommendations";
-import { Walrus } from "@/components/Walrus";
 import { getRecommendations } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import { posterUrl } from "@/lib/tmdb";
@@ -21,8 +20,6 @@ export default async function RecommendationsPage() {
 
   return (
     <AppShell user={user}>
-      <Walrus context={{ page: "recommendations", count: recs.length }} />
-
       <PageHeading title="For you" count={recs.length}>
         <RefreshRecommendations />
       </PageHeading>

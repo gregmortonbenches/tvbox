@@ -3,7 +3,6 @@ import Link from "next/link";
 import { eq, inArray } from "drizzle-orm";
 import { AppShell, EmptyState, PageHeading } from "@/components/AppShell";
 import { AddButton } from "@/components/AddButton";
-import { Walrus } from "@/components/Walrus";
 import { db } from "@/lib/db";
 import { listEntries, titles } from "@/lib/db/schema";
 import { titleHref } from "@/lib/queries";
@@ -42,8 +41,6 @@ export default async function SearchPage({
 
   return (
     <AppShell user={user}>
-      {query && <Walrus context={{ page: "search", results: results.length, query }} />}
-
       <PageHeading
         title={query ? `“${query}”` : "Search"}
         count={query ? results.length : undefined}

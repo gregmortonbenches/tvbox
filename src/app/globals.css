@@ -1,56 +1,51 @@
 @import "tailwindcss";
 
 /*
- * Palette: six traditional Japanese colours, supplied as the project's
- * colour guideline. Names kept in romaji so they're greppable against the
- * original reference card:
+ * Palette: Richard Scarry-inspired — primary colours used boldly on warm
+ * cream, the way they feel in Busy, Busy Town. Names are kept from the
+ * original Japanese palette so component classes (text-suzume, text-koji…)
+ * don't need touching; only the hex values have changed.
  *
- *   tobi        鳶色    (とびいろ)    Hay's Russet
- *   kobicha     媚茶色  (こびちゃいろ) Pale Raw Umber
- *   koji        柑子色  (こうじいろ)   Yellow Orange
- *   benifuji    紅藤    (べにふじ)    Laelia Pink
- *   suzume      雀茶    (すずめちゃ)   Etruscan Red
- *   kamenozoki  瓶覗    (かめのぞき)   Pale King's Blue
+ *   tobi        — Scarry red     (the "CARS and TRUCKS" tomato red)
+ *   kobicha     — warm orange    (the "Busy Town" title colour)
+ *   koji        — traffic yellow (the golden traffic-light yellow)
+ *   benifuji    — warm peach     (subtle warm mid-tone)
+ *   suzume      — deep red       (pressed / error / rotten-score states)
+ *   kamenozoki  — Scarry blue    (the "Richard Scarry's" cobalt blue)
  *
  * Use the SEMANTIC tokens below in components, not the raw palette names —
  * that way a palette tweak is a one-line change here rather than a sweep
  * through every file. Raw names are exposed for the rare one-off.
  */
 @theme {
-  --color-tobi: #95483f;
-  --color-kobicha: #8a6510;
-  --color-koji: #e8900a;
-  --color-benifuji: #b87aaa;
-  --color-suzume: #c23a1e;
-  --color-kamenozoki: #a2bfe0;
+  --color-tobi: #cc3520;
+  --color-kobicha: #d05a18;
+  --color-koji: #f0c020;
+  --color-benifuji: #e8a060;
+  --color-suzume: #a82818;
+  --color-kamenozoki: #2968b8;
 
-  /* Surfaces — warm whites in the same family as the palette. */
+  /* Surfaces — warm cream like a Scarry book page. */
   --color-canvas: #ffffff;
-  --color-surface: #f5f0e8;
-  --color-raised: #ede5d6;
-  --color-line: #d4c9b5;
+  --color-surface: #fef8ec;
+  --color-raised: #fef0d4;
+  --color-line: #e8d5a0;
 
   /* Text */
-  --color-ink: #1a1510;
-  --color-ink-muted: #6b5c46;
-  --color-ink-faint: #9c8a74;
+  --color-ink: #1a1008;
+  --color-ink-muted: #6b5030;
+  --color-ink-faint: #9a8060;
 
   /* Semantic roles */
-  --color-accent: var(--color-kobicha);       /* ratings, primary action */
+  --color-accent: var(--color-tobi);          /* ratings, primary action */
   --color-accent-strong: var(--color-suzume); /* hover / pressed */
-  --color-link: #3a6ea5;                      /* links, info — darkened for light bg */
-  --color-tag: var(--color-suzume);           /* genre chips, metadata */
+  --color-link: var(--color-kamenozoki);      /* links, info */
+  --color-tag: var(--color-kobicha);          /* genre chips, metadata */
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-/*
- * Dark-first and, for now, dark-only — the reference palette is a set of
- * muted earth tones that read well on a near-black canvas and turn muddy on
- * white. A light theme would need its own (lighter, less saturated) ramp
- * rather than a straight inversion, so it's deliberately not stubbed here.
- */
 html {
   color-scheme: light;
 }
@@ -63,6 +58,6 @@ body {
 }
 
 ::selection {
-  background: var(--color-kobicha);
-  color: #ffffff;
+  background: var(--color-koji);
+  color: var(--color-ink);
 }

@@ -3,7 +3,6 @@ import { AppShell } from "@/components/AppShell";
 import { FilmWatchToggle } from "@/components/FilmWatchToggle";
 import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
-import { Walrus } from "@/components/Walrus";
 import { ensureTitleCached } from "@/lib/cache";
 import { getFilmWatchers, getListEntry, getTitleRatings } from "@/lib/queries";
 import { getAllUsers, getCurrentUser } from "@/lib/session";
@@ -36,16 +35,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
   return (
     <AppShell user={user}>
-      <Walrus
-        context={{
-          page: "film",
-          name: detail.name,
-          youSeen: watchers.has(user.id),
-          theySeen: other ? watchers.has(other.id) : false,
-          theirName: other?.displayName ?? "they",
-        }}
-      />
-
       <TitleHero
         titleId={titleId}
         mediaType="film"
