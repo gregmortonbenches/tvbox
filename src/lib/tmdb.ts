@@ -53,6 +53,8 @@ export type TitleSummary = {
 };
 
 export type TitleDetail = TitleSummary & {
+  /** Needed to look up external ratings — see lib/omdb.ts. */
+  imdbId: string | null;
   status: string | null;
   genres: { id: number; name: string }[];
   /** TV only. */
@@ -158,6 +160,9 @@ export async function getTrending(type: MediaType): Promise<TitleSummary[]> {
 }
 
 type RawDetail = RawTmdbResult & {
+  /** Films carry this at the top level; series only via external_ids. */
+  imdb_id?: string | null;
+  external_ids?: { imdb_id?: string | null };
   status?: string;
   genres?: { id: number; name: string }[];
   last_air_date?: string | null;
@@ -168,9 +173,19 @@ type RawDetail = RawTmdbResult & {
 };
 
 export async function getTitle(tmdbId: number, type: MediaType): Promise<TitleDetail> {
-  const raw = await tmdb<RawDetail>(`/${SEGMENT[type]}/${tmdbId}`, REVALIDATE.detail);
+  /*
+   * append_to_response folds external_ids into the same request. A film
+   * already carries imdb_id at the top level; a series only exposes it under
+   * external_ids, so asking for both costs one call either way instead of
+   * branching into a second round trip for TV.
+   */
+  const raw = await tmdb<RawDetail>(
+    `/${SEGMENT[type]}/${tmdbId}?append_to_response=external_ids`,
+    REVALIDATE.detail,
+  );
   return {
     ...normalise(raw, type),
+    imdbId: raw.imdb_id || raw.external_ids?.imdb_id || null,
     status: raw.status ?? null,
     genres: raw.genres ?? [],
     lastAirDate: raw.last_air_date ?? null,

@@ -31,6 +31,10 @@ export type TitleCard = {
   watchedByUser: Record<string, number>;
   /** Title-level rating in half-stars (1..10), keyed by user id. */
   ratingByUser: Record<string, number>;
+  /** External scores — see lib/omdb.ts. Null until backfilled. */
+  rtCritic: number | null;
+  imdbRating: number | null;
+  metascore: number | null;
 };
 
 /** The route a title lives at. TV and film ids come from separate sequences. */
@@ -65,6 +69,9 @@ export async function getTitleCards(
       posterPath: titles.posterPath,
       releaseDate: titles.releaseDate,
       numberOfEpisodes: titles.numberOfEpisodes,
+      rtCritic: titles.rtCritic,
+      imdbRating: titles.imdbRating,
+      metascore: titles.metascore,
       status: listEntries.status,
       addedAt: listEntries.addedAt,
       finishedAt: listEntries.finishedAt,
@@ -123,6 +130,9 @@ export async function getTitleCards(
         e.mediaType === "film" ? 0 : (e.numberOfEpisodes ?? cachedByTitle.get(e.id) ?? 0),
       watchedByUser,
       ratingByUser,
+      rtCritic: e.rtCritic,
+      imdbRating: e.imdbRating,
+      metascore: e.metascore,
     };
   });
 }

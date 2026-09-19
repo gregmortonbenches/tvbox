@@ -18,7 +18,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
   const [user, people] = await Promise.all([getCurrentUser(), getAllUsers()]);
   if (!user) notFound();
 
-  const { detail, titleId } = await ensureTitleCached(tmdbId, "tv");
+  const { detail, titleId, stored } = await ensureTitleCached(tmdbId, "tv");
 
   /*
    * Make sure every season's episodes are cached before rendering the ticker.
@@ -83,6 +83,9 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
         backdropPath={detail.backdropPath}
         metaLine={meta}
         genres={detail.genres}
+        rtCritic={stored.rtCritic}
+        imdbRating={stored.imdbRating}
+        metascore={stored.metascore}
         status={entry?.status ?? null}
         people={people}
         currentUserId={user.id}

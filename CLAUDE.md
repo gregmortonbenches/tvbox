@@ -29,6 +29,9 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
 | `src/lib/tmdb.ts` | TMDB client. Server-only, Bearer auth, per-endpoint revalidate windows. |
 | `src/lib/cache.ts` | Mirrors TMDB rows into `shows`/`episodes` so grids don't fan out to the API. |
 | `src/lib/recommend.ts` | Claude-or-TMDB recommendation generation. The only thing that can cost money. |
+| `src/lib/omdbParse.ts` | Pure OMDb payload parsing. NOT server-only, so scripts and tests can import it. |
+| `src/lib/omdb.ts` | OMDb fetch wrapper. server-only; re-exports the parser. |
+| `scripts/backfill-ratings.mts` | Walks cached titles filling in RT/IMDb/Metacritic. Quota-aware. |
 | `src/lib/auth.ts` | Cookie signing (Web Crypto, so it runs on the edge in `proxy.ts`). |
 | `src/lib/session.ts` | `getCurrentUser()` / `getAllUsers()`. |
 | `src/lib/walrusLines.ts` | What the mascot says, and how a line is picked. |
@@ -168,6 +171,32 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   viewing date. `finishedAt` is left null rather than stamped with an invented
   date that would misorder the archive.
 
+- **Rotten Tomatoes scores come via OMDb, and that is not a shortcut worth
+  "fixing".** RT has no self-serve API — access is an approved-partner licence
+  at a price no hobby project pays — and scraping their site breaches their
+  terms and breaks constantly. OMDb republishes the Tomatometer, so that's the
+  route. The cost is that there's **no RT audience score**, only the critic
+  number. MDBList returns both if that ever matters; it would replace
+  `src/lib/omdb.ts` and nothing else.
+
+- **`ratingsFetchedAt` distinguishes "never looked" from "looked, found
+  nothing".** Plenty of titles genuinely have no RT score, especially TV. If a
+  null score meant "not yet fetched", the backfill would spend the whole daily
+  quota re-asking about the same misses every run. Stamp the timestamp even
+  when nothing comes back.
+
+- **The backfill is built around a 1,000/day quota.** Hitting the limit is an
+  expected outcome, not a failure: it stops, reports what's left, and resumes
+  next run. Don't "improve" it into something that retries through the limit.
+
+- **Scores are stored as integers.** `rtCritic`/`metascore` are 0..100 and
+  `imdbRating` is in TENTHS (85 = 8.5), same trick as the half-star ratings.
+  Postgres `numeric` comes back as a string in Drizzle, which is worse.
+
+- **Parsing lives in `omdbParse.ts`, away from the fetch.** `omdb.ts` is
+  `server-only`, which means scripts and tests cannot import it. The parsing
+  was briefly duplicated into the backfill script; don't reintroduce that.
+
 ## Known gaps
 
 - **Anything that fetches from TMDB is unverified against a live token** — the
@@ -184,6 +213,10 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Drizzle + Postgres.
   breaking. Left alone deliberately.
 - Tests cover the import parser and matcher only (`npm test`). The app itself
   has none; `npm run typecheck && npm run lint && npm run build` is the gate.
+- **Nothing has been run against a live OMDb key.** The parser is tested
+  against real-shaped payloads and the script's quota/no-key/no-imdb-id paths
+  were exercised against a real database, but no actual OMDb call has been
+  made from here.
 - **Neither importer has been run against a live TMDB token.** The parser and
   matcher are tested, and both scripts degrade cleanly without a token, but the
   actual resolve-and-write path is unexercised. Run `--dry-run` first.

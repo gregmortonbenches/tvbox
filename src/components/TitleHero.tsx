@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Scores } from "./Scores";
 import { StarRating } from "./StarRating";
 import { StatusControl } from "./StatusControl";
 import type { CurrentUser } from "@/lib/session";
@@ -20,6 +21,9 @@ export function TitleHero({
   backdropPath,
   metaLine,
   genres,
+  rtCritic,
+  imdbRating,
+  metascore,
   status,
   people,
   currentUserId,
@@ -35,6 +39,9 @@ export function TitleHero({
   backdropPath: string | null;
   metaLine: string;
   genres: { id: number; name: string }[];
+  rtCritic: number | null;
+  imdbRating: number | null;
+  metascore: number | null;
   status: ListStatus | null;
   people: CurrentUser[];
   currentUserId: string;
@@ -63,6 +70,15 @@ export function TitleHero({
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1>
           <p className="mt-1 text-sm text-ink-faint">{metaLine}</p>
+
+          <div className="mt-2">
+            <Scores
+              rtCritic={rtCritic}
+              imdbRating={imdbRating}
+              metascore={metascore}
+              size="md"
+            />
+          </div>
 
           {genres.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-1.5">

@@ -80,11 +80,39 @@ export const titles = pgTable(
     /* Film only — null for TV. */
     runtime: integer("runtime"),
 
+    /*
+     * External ratings, fetched from OMDb — see lib/omdb.ts.
+     *
+     * Rotten Tomatoes has no self-serve API (access is an approved-partner
+     * licence), so the Tomatometer arrives second-hand via OMDb. That means
+     * the CRITIC score only: OMDb does not carry RT's audience score.
+     *
+     * `imdbId` is what OMDb is keyed on, so it's cached here rather than
+     * re-fetched from TMDB on every backfill.
+     *
+     * Stored as integers on purpose:
+     *   rtCritic / metascore  0..100
+     *   imdbRating            TENTHS, so 85 means 8.5 — same trick as the
+     *                         half-star ratings, and it avoids Postgres
+     *                         numeric coming back as a string in Drizzle.
+     */
+    imdbId: varchar("imdb_id", { length: 12 }),
+    rtCritic: smallint("rt_critic"),
+    imdbRating: smallint("imdb_rating"),
+    metascore: smallint("metascore"),
+    /** Null means never looked up; a date means looked up, possibly finding
+     *  nothing — the two cases must stay distinguishable or the backfill
+     *  re-queries every title with no scores, forever. */
+    ratingsFetchedAt: timestamp("ratings_fetched_at", { withTimezone: true }),
+
     cachedAt: timestamp("cached_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     unique("titles_tmdb_media_key").on(t.tmdbId, t.mediaType),
     index("titles_media_type_idx").on(t.mediaType),
+    index("titles_imdb_id_idx").on(t.imdbId),
+    /* Drives "what still needs a backfill" without a full scan. */
+    index("titles_ratings_fetched_idx").on(t.ratingsFetchedAt),
   ],
 );
 

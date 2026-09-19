@@ -3,6 +3,7 @@ import Link from "next/link";
 import { posterUrl } from "@/lib/tmdb";
 import type { CurrentUser } from "@/lib/session";
 import { titleHref, type TitleCard } from "@/lib/queries";
+import { Scores } from "./Scores";
 import { StarRating } from "./StarRating";
 
 /*
@@ -62,6 +63,12 @@ export function PosterCard({
           </p>
           {year && <p className="text-xs text-ink-faint">{year}</p>}
         </Link>
+
+        <Scores
+          rtCritic={title.rtCritic}
+          imdbRating={title.imdbRating}
+          metascore={title.metascore}
+        />
 
         {showProgress && !isFilm && title.totalEpisodes > 0 && (
           <div className="space-y-1 pt-0.5">

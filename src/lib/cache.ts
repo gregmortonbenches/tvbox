@@ -45,8 +45,12 @@ export async function cacheTitleSummary(summary: TitleSummary): Promise<string> 
   return row.id;
 }
 
-/** Upsert the full detail record. Returns its internal id. */
-export async function cacheTitleDetail(detail: TitleDetail): Promise<string> {
+/**
+ * Upsert the full detail record. Returns the STORED ROW, not just the id:
+ * external ratings (RT/IMDb/Metacritic) live on that row and are not part of
+ * the TMDB payload, so returning it saves every caller a second read.
+ */
+export async function cacheTitleDetail(detail: TitleDetail) {
   const [row] = await db
     .insert(titles)
     .values({
@@ -57,6 +61,7 @@ export async function cacheTitleDetail(detail: TitleDetail): Promise<string> {
       posterPath: detail.posterPath,
       backdropPath: detail.backdropPath,
       releaseDate: detail.releaseDate,
+      imdbId: detail.imdbId,
       status: detail.status,
       lastAirDate: detail.lastAirDate,
       numberOfSeasons: detail.numberOfSeasons,
@@ -70,6 +75,7 @@ export async function cacheTitleDetail(detail: TitleDetail): Promise<string> {
         overview: detail.overview,
         posterPath: detail.posterPath,
         backdropPath: detail.backdropPath,
+        imdbId: detail.imdbId,
         status: detail.status,
         lastAirDate: detail.lastAirDate,
         numberOfSeasons: detail.numberOfSeasons,
@@ -78,18 +84,15 @@ export async function cacheTitleDetail(detail: TitleDetail): Promise<string> {
         cachedAt: new Date(),
       },
     })
-    .returning({ id: titles.id });
-  return row.id;
+    .returning();
+  return row;
 }
 
-/** Fetch from TMDB and cache in one step. Returns the detail and internal id. */
-export async function ensureTitleCached(
-  tmdbId: number,
-  type: MediaType,
-): Promise<{ detail: TitleDetail; titleId: string }> {
+/** Fetch from TMDB and cache in one step. */
+export async function ensureTitleCached(tmdbId: number, type: MediaType) {
   const detail = await getTitle(tmdbId, type);
-  const titleId = await cacheTitleDetail(detail);
-  return { detail, titleId };
+  const stored = await cacheTitleDetail(detail);
+  return { detail, titleId: stored.id, stored };
 }
 
 /** The internal id for a TMDB id, or null if we've never cached it. */

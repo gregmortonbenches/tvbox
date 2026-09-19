@@ -33,7 +33,7 @@ function Footer() {
   return (
     <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-ink-faint">
       <p>
-        Show data from{" "}
+        Title data from{" "}
         <a
           href="https://www.themoviedb.org/"
           className="hover:text-ink-muted"
@@ -42,7 +42,16 @@ function Footer() {
         >
           TMDB
         </a>
-        . Walrus by Lewen Design from{" "}
+        , ratings via{" "}
+        <a
+          href="https://www.omdbapi.com/"
+          className="hover:text-ink-muted"
+          target="_blank"
+          rel="noreferrer"
+        >
+          OMDb
+        </a>
+        {" "}(Rotten Tomatoes, IMDb, Metacritic). Walrus by Lewen Design from{" "}
         <a
           href="https://thenounproject.com/"
           className="hover:text-ink-muted"

@@ -20,6 +20,8 @@ and no public profiles. Two people, one shared list.
 - **Ratings** — half-stars out of five, one rating each, shown side by side.
 - **For you** — suggestions with a reason attached, either from Claude or from
   TMDB's own "similar shows".
+- **Ratings from elsewhere** — Rotten Tomatoes, IMDb and Metacritic scores
+  shown alongside your own stars.
 - **A walrus** — who has opinions about your viewing habits.
 
 Two open tabs stay in step: pages re-fetch every 10 seconds and immediately
@@ -48,6 +50,7 @@ Then open http://localhost:3000, enter the shared password, and pick who you are
 | `DATABASE_URL` | yes | Postgres connection string. Hosted providers usually need `?sslmode=require`. |
 | `APP_PASSWORD` | yes | The shared password. Anyone with it can read and write everything. |
 | `AUTH_SECRET` | yes | Signs the login cookies. Generate with `openssl rand -base64 32`. |
+| `OMDB_API_KEY` | no | Enables Rotten Tomatoes / IMDb / Metacritic scores. Free key, 1,000 lookups/day, from [omdbapi.com](https://www.omdbapi.com/apikey.aspx). |
 | `ANTHROPIC_API_KEY` | no | Enables Claude-written recommendations. Leave blank for the free TMDB fallback. |
 | `SEED_NAME_1` / `SEED_NAME_2` | no | Display names for the two profiles. Default to Greg and Hannah. |
 
@@ -98,6 +101,34 @@ Neither importer records watch dates: the Trakt timestamps are all epoch, and
 Letterboxd grid order is by release date, not viewing date. A fabricated date
 would misorder the archive.
 
+## Rotten Tomatoes scores
+
+RT has **no self-serve API** — access runs through the Fandango Developer
+Network as an approved-partner licence, reportedly starting around $60k/year.
+So the Tomatometer arrives second-hand via [OMDb](https://www.omdbapi.com/),
+which republishes it alongside IMDb and Metacritic.
+
+Two consequences worth knowing:
+
+- **Critic score only.** OMDb does not carry RT's audience score. If that
+  number matters more to you, MDBList returns both (plus a Letterboxd rating)
+  and would be a drop-in replacement for `src/lib/omdb.ts`.
+- **TV coverage is thinner than film.** Expect gaps on series. A missing score
+  is normal, not an error.
+
+```bash
+npm run backfill:ratings -- --dry-run   # what would be looked up, and how long
+npm run backfill:ratings                # go
+npm run backfill:ratings -- --limit 200 # a smaller bite
+npm run backfill:ratings -- --refresh-after 90   # re-check anything older than 90 days
+```
+
+The free tier is 1,000 lookups/day, so a full backfill of ~1,360 titles takes
+two days. That's handled rather than fatal: the script stops cleanly when the
+quota runs out, says how many are left, and resumes where it stopped next time
+you run it. A title that was looked up but had no scores is still marked as
+checked, so the quota isn't spent re-asking about the same misses forever.
+
 ## Scripts
 
 | Command | Does |
@@ -114,6 +145,7 @@ would misorder the archive.
 | `npm test` | Parser and film-matcher tests |
 | `npm run import:trakt` | Import TV history (see above) |
 | `npm run import:films` | Import film history (see above) |
+| `npm run backfill:ratings` | Fetch RT/IMDb/Metacritic scores (see above) |
 
 ## Deploying
 
@@ -133,8 +165,13 @@ Postgres · TMDB · the Anthropic SDK (optional).
 
 ## Credits
 
-Show data and images from [TMDB](https://www.themoviedb.org/). This product uses
-the TMDB API but is not endorsed or certified by TMDB.
+Title data and images from [TMDB](https://www.themoviedb.org/). This product
+uses the TMDB API but is not endorsed or certified by TMDB.
+
+Ratings via [OMDb](https://www.omdbapi.com/), which republishes Rotten
+Tomatoes, IMDb and Metacritic scores. Not affiliated with or endorsed by any of
+them. Scores are displayed as plain numbers rather than Rotten Tomatoes'
+tomato imagery, which is their trademark.
 
 Walrus icon by Lewen Design from [Noun Project](https://thenounproject.com/),
 used under CC BY. The credit in the app footer is a licence condition — if you

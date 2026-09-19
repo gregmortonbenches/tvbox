@@ -15,7 +15,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const [user, people] = await Promise.all([getCurrentUser(), getAllUsers()]);
   if (!user) notFound();
 
-  const { detail, titleId } = await ensureTitleCached(tmdbId, "film");
+  const { detail, titleId, stored } = await ensureTitleCached(tmdbId, "film");
 
   const [watchers, ratings, entry] = await Promise.all([
     getFilmWatchers(titleId),
@@ -55,6 +55,9 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
         backdropPath={detail.backdropPath}
         metaLine={meta}
         genres={detail.genres}
+        rtCritic={stored.rtCritic}
+        imdbRating={stored.imdbRating}
+        metascore={stored.metascore}
         status={entry?.status ?? null}
         people={people}
         currentUserId={user.id}

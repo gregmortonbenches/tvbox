@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "import:films": "node --experimental-strip-types scripts/import-films.mts",
     "import:trakt": "node --experimental-strip-types scripts/import-trakt.mts",
-    "test": "node --experimental-strip-types tests/parseFilmList.test.mts && node --experimental-strip-types tests/import-films.test.mts"
+    "test": "node --experimental-strip-types tests/parseFilmList.test.mts && node --experimental-strip-types tests/import-films.test.mts && node --experimental-strip-types tests/omdbParse.test.mts",
+    "backfill:ratings": "node --experimental-strip-types scripts/backfill-ratings.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",
