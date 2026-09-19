@@ -18,29 +18,28 @@
  */
 @theme {
   --color-tobi: #95483f;
-  --color-kobicha: #6c541e;
-  --color-koji: #f6ad49;
-  --color-benifuji: #cca6bf;
-  --color-suzume: #aa4a34;
+  --color-kobicha: #8a6510;
+  --color-koji: #e8900a;
+  --color-benifuji: #b87aaa;
+  --color-suzume: #c23a1e;
   --color-kamenozoki: #a2bfe0;
 
-  /* Surfaces — warm near-blacks pulled down from kobicha rather than
-     neutral greys, so the dark UI sits in the same family as the palette. */
-  --color-canvas: #14110c;
-  --color-surface: #1e1912;
-  --color-raised: #2a231a;
-  --color-line: #3b3125;
+  /* Surfaces — warm whites in the same family as the palette. */
+  --color-canvas: #ffffff;
+  --color-surface: #f5f0e8;
+  --color-raised: #ede5d6;
+  --color-line: #d4c9b5;
 
   /* Text */
-  --color-ink: #f4ece0;
-  --color-ink-muted: #a89880;
-  --color-ink-faint: #7a6c58;
+  --color-ink: #1a1510;
+  --color-ink-muted: #6b5c46;
+  --color-ink-faint: #9c8a74;
 
   /* Semantic roles */
-  --color-accent: var(--color-koji);          /* ratings, primary action */
+  --color-accent: var(--color-kobicha);       /* ratings, primary action */
   --color-accent-strong: var(--color-suzume); /* hover / pressed */
-  --color-link: var(--color-kamenozoki);      /* links, info */
-  --color-tag: var(--color-benifuji);         /* genre chips, metadata */
+  --color-link: #3a6ea5;                      /* links, info — darkened for light bg */
+  --color-tag: var(--color-suzume);           /* genre chips, metadata */
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -53,7 +52,7 @@
  * rather than a straight inversion, so it's deliberately not stubbed here.
  */
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -64,6 +63,6 @@ body {
 }
 
 ::selection {
-  background: var(--color-koji);
-  color: var(--color-canvas);
+  background: var(--color-kobicha);
+  color: #ffffff;
 }
