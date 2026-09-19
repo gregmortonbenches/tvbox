@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { AppShell } from "@/components/AppShell";
 import { EpisodeList } from "@/components/EpisodeList";
+import { FavouriteToggle } from "@/components/FavouriteToggle";
 import { ListEntryPanel } from "@/components/ListEntryPanel";
 import { TitleHero } from "@/components/TitleHero";
 import { cacheSeasonEpisodes, ensureTitleCached } from "@/lib/cache";
@@ -82,6 +83,12 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
         currentUserId={user.id}
         ratings={ratings}
       />
+
+      {entry && (
+        <div className="mt-4">
+          <FavouriteToggle titleId={titleId} favourite={entry.favourite} />
+        </div>
+      )}
 
       <ListEntryPanel entry={entry} mediaType="tv" tmdbId={tmdbId} people={people} />
 

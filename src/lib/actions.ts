@@ -383,6 +383,15 @@ export async function setWantedBy(
 /* ---- the note ------------------------------------------------------------ */
 
 /** Why it's on the list — "Dave keeps going on about it". Empty clears it. */
+export async function setFavourite(titleId: string, favourite: boolean) {
+  await requireUser();
+  await db
+    .update(listEntries)
+    .set({ favourite })
+    .where(eq(listEntries.titleId, titleId));
+  revalidateLists();
+}
+
 export async function setNote(
   titleId: string,
   note: string,

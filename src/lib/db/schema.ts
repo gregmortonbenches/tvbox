@@ -203,6 +203,13 @@ export const listEntries = pgTable(
 
     /** Free-text "why it's on the list" — e.g. "Dave keeps going on about it". */
     note: text("note"),
+    /*
+     * Favourite TV shows are monitored for new seasons. When TMDB reports a
+     * season count higher than what's in the episodes table, the show's status
+     * is moved back to "want" so it reappears on the watchlist automatically.
+     * Films never get new seasons, so this flag is only meaningful for TV.
+     */
+    favourite: boolean("favourite").notNull().default(false),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },

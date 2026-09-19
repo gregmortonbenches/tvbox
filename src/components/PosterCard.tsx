@@ -65,6 +65,14 @@ export function PosterCard({
               Film
             </span>
           )}
+          {title.favourite && (
+            <span
+              className="absolute left-1.5 top-1.5 grid size-5 place-items-center rounded bg-koji/90 text-[11px] leading-none text-canvas backdrop-blur-sm"
+              title="Favourite — new seasons added to watchlist automatically"
+            >
+              ★
+            </span>
+          )}
           {rank !== undefined && (
             <span
               className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded bg-canvas/85 font-mono text-[11px] tabular-nums text-accent backdrop-blur-sm"

@@ -43,6 +43,8 @@ export type TitleCard = {
   note: string | null;
   /** Who added it — pairs with the note for "Hannah added this because…". */
   addedByUserId: string;
+  /** TV only: true means we want to be notified when a new season drops. */
+  favourite: boolean;
 };
 
 /** The route a title lives at. TV and film ids come from separate sequences. */
@@ -94,6 +96,7 @@ export async function getTitleCards(
       wantedByUserId: listEntries.wantedByUserId,
       note: listEntries.note,
       addedByUserId: listEntries.addedByUserId,
+      favourite: listEntries.favourite,
     })
     .from(listEntries)
     .innerJoin(titles, eq(titles.id, listEntries.titleId))
@@ -156,6 +159,7 @@ export async function getTitleCards(
       wantedByUserId: e.wantedByUserId,
       note: e.note,
       addedByUserId: e.addedByUserId,
+      favourite: e.favourite,
     };
   });
 }

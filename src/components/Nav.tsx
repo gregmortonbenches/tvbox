@@ -15,7 +15,7 @@ export function Nav({ user }: { user: CurrentUser | null }) {
     <header className="sticky top-0 z-50 border-b border-line bg-canvas/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
         <Link href="/" aria-label="tvbox home">
-          <WalrusArt className="size-9 text-tobi" title="tvbox" />
+          <WalrusArt className="size-12 text-tobi" title="tvbox" />
         </Link>
 
         <nav className="flex items-center gap-5 text-sm">
