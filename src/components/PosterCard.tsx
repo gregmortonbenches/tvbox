@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { posterUrl } from "@/lib/tmdb";
 import type { CurrentUser } from "@/lib/session";
-import { titleHref, type TitleCard } from "@/lib/queries";
+import { posterUrl, titleHref } from "@/lib/urls";
+import type { TitleCard } from "@/lib/queries";
 import { PriorityControls } from "./PriorityControls";
 import { Scores } from "./Scores";
 import { StarRating } from "./StarRating";

@@ -241,9 +241,7 @@ export async function getSimilar(
 
 /* ---- Image helpers ------------------------------------------------------ */
 
-export function posterUrl(path: string | null, size: "w342" | "w500" = "w342") {
-  return path ? `${IMAGE_BASE}/${size}${path}` : null;
-}
+export { posterUrl } from "./urls";
 
 export function backdropUrl(path: string | null, size: "w780" | "w1280" = "w1280") {
   return path ? `${IMAGE_BASE}/${size}${path}` : null;

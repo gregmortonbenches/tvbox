@@ -49,10 +49,7 @@ export type TitleCard = {
   favourite: boolean;
 };
 
-/** The route a title lives at. TV and film ids come from separate sequences. */
-export function titleHref(mediaType: MediaType, tmdbId: number): string {
-  return `/${mediaType}/${tmdbId}`;
-}
+export { titleHref } from "./urls";
 
 /**
  * Everything the poster grids need, in four queries rather than N+1.
